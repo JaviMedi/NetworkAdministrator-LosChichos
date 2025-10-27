@@ -1,0 +1,23 @@
+#!/bin/bash
+
+###########################
+## Script de Instalación ##
+###########################
+
+apt update
+apt install -y curl
+apt install -y net-tools
+apt install -y apache2
+apt install -y expect
+apt install -y socat
+
+## Desactivar NetworkManager
+echo "Desactivando NetworkManager.."
+
+systemctl stop NetworkManager
+systemctl disable NetworkManager
+echo
+
+echo "NetworkManager desactivado."
+
+

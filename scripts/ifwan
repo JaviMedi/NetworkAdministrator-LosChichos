@@ -1,0 +1,244 @@
+#!/bin/bash
+ifwanconf="/usr/local/LosChichos/conf/ifwan.conf"
+source $ifwanconf
+
+####################################
+## Script de configuracion de Red ##
+####################################
+
+#########################################################
+## Funciones 
+#########################################################
+fnc_start() {
+
+    if [ $(fnc_status) == "ACTIVO" ]; then
+        echo "El servicio está activo"
+        exit 1
+    fi
+
+    case $MODO in
+        dhcp)
+            echo "Iniciando DHCP..."
+            ip l s dev $enp up
+            dhcpcd $enp || echo "No se ha encontrado la tarjeta $enp"
+            ;;
+        manual)
+            echo "has elegido el modo manual"
+            ip a flush dev $enp
+            #echo "$IP/$MASC $enp $GW $S_DNS"
+            ip a a $IP/$MASC dev $enp
+            ip l s dev $enp up
+            ip r a default via $GW
+            fnc_almacenar_conf "#DNS" "$S_DNS" "/etc/systemd/resolved.conf"
+            systemctl restart systemd-resolved
+            ;;
+        *)
+            echo "Falta modo, ejecuta primero: $0 conf [dhcp,manual]"
+            exit 1
+            ;;
+    esac
+ 
+}
+
+fnc_stop(){
+
+    if  [ "$MODO" = "dhcp" ] && [ $(fnc_status) == "INACTIVO" ]; then
+        echo "El servicio está Parado"
+        exit 1
+    fi
+
+    case $MODO in
+        dhcp)
+            echo "Parando DHCP..."
+            dhcpcd -K $enp || echo "No se ha encontrado la tarjeta $enp"
+            ip a flush dev $enp
+            ip l s dev $enp down
+            ;;
+        manual)
+            echo "Eliminando Configuración..."
+            ip a flush dev $enp
+            ip l s dev $enp down
+            ;;
+        *)
+            echo "Falta modo, ejecuta primero: $0 conf [dhcp,manual]"
+            exit 1
+            ;;
+    esac
+}
+
+fnc_almacenar_conf(){
+    local nombre="$1"
+    local valor="$2"
+    local fichero="$3"
+
+    if grep -q "^${nombre}=" "$fichero" 2>/dev/null; then
+        sed -i "s/^${nombre}=.*/${nombre}=${valor}/" "$fichero"
+    else
+        echo "${nombre}=${valor}" >> "$fichero"
+    fi
+}
+
+fnc_conf(){
+
+    if [ $(fnc_status) == "ACTIVO" ]; then
+        fnc_stop
+    fi
+
+    #Comprobar Primer argumento [dhcp o manual]
+    if [ "$1" != "dhcp" ] && [ "$1" != "manual" ]; then
+        echo "Error: modo no válido. Usa 'dhcp' o 'manual'."
+        exit 1
+    fi
+    if [ $# -lt 1 ]; then
+        echo "Falta modo: [dhcp,manual]"
+        exit 1
+    fi
+
+    modo=$1
+    shift
+
+    #Comprovar Segundo argumento, targeta
+    if [ $# -lt 1 ]; then
+        echo "Falta nombre de la targeta"
+        echo "Interfaces disponibles:"
+        ls /sys/class/net
+        exit 1
+    fi
+    if ! ip link show "$1" &>/dev/null; then
+        echo "Error: la interfaz '$1' no existe en el sistema."
+        echo "Interfaces disponibles:"
+        ls /sys/class/net
+        exit 1
+    fi
+
+    tarjeta=$1
+    shift
+    
+    #Intoducir argumentos
+    fnc_almacenar_conf "MODO" "$modo" "$ifwanconf"
+    fnc_almacenar_conf "enp" "$tarjeta" "$ifwanconf"
+
+    # Si el modo es dhcp, no necesitamos nada más asi que salimos
+
+    if [ "$modo" = "dhcp" ]; then
+        echo "Configuración guardada correctamente:"
+        echo "   MODO=$modo"
+        echo "   enp=$tarjeta"
+        exit 0
+    fi
+
+    # Comprovar tercer argumento, IP y mascara
+    if [ $# -lt 1 ]; then
+        echo "Falta dirección ip"
+        exit 1
+    fi
+    ip=$(echo $1 | cut -d'/' -f1)
+    masc=$(echo $1 | cut -d'/' -f2)
+    var=0
+    if [[ ! $ip =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
+        var=1
+    fi
+    IFS='.' read -r o1 o2 o3 o4 <<< "$ip"
+    for byte in $o1 $o2 $o3 $o4; do
+        (($byte >= 0 && $byte <= 255)) || var=2
+    done
+    if [ $var -gt 0 ]; then
+        echo "formato de ip incorrecta: xxxx.xxxx.xxxx.xxxx/0-32 (0,255)"
+        exit 1
+    else
+    fnc_almacenar_conf "IP" "$ip" "$ifwanconf"
+
+    if [ -z "$masc" ] || ! [[ "$masc" =~ ^[0-9]+$ ]]; then
+        echo "Falta la máscara de red o no es numérica (formato: x.x.x.x/0-32)"
+        exit 1
+    fi
+    if [ "$masc" -lt 0 ] || [ "$masc" -gt 32 ]; then
+        echo "Máscara de red en formato invalido: [0-32]"
+        exit 1
+    fi
+    fnc_almacenar_conf "MASC" "$masc" "$ifwanconf"
+    shift
+    # almacenar gateway
+    if [ $# -lt 1 ]; then
+        echo "Falta gateway"
+        exit 1
+    fi
+    gateway=$1
+    if [[ ! $gateway =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
+        var=1
+    fi
+    IFS='.' read -r o1 o2 o3 o4 <<< "$gateway"
+    for byte in $o1 $o2 $o3 $o4; do
+        (($byte >= 0 && $byte <= 255)) || var=2
+    done
+    if [ $var -gt 0 ]; then
+        echo "formato de gateway: xxxx.xxxx.xxxx.xxxx (0,255)"
+        exit 1
+    else
+    fnc_almacenar_conf "GW" "$gateway" "$ifwanconf"
+    fi
+    shift
+     # almacenar dns, apuntar hacer los comprobantes pertinentes luego...
+    if [ $# -lt 1 ]; then
+        echo "Falta dirección servidor dns [default 8.8.8.8]"
+        dns=8.8.8.8
+    else
+        dns=$1echo "Falta dirección servidor dns [default 8.8.8.8]"
+        dns=8.8.8.8
+    fi
+    fnc_almacenar_conf "S_DNS" "$dns" "$ifwanconf"
+
+    
+        echo "Configuración guardada correctamente:"
+        echo "  MODO=$modo"
+        echo "  enp=$tarjeta"
+        echo "  IP=$ip"
+        echo "  Masc=$masc"
+        echo "  GW=$gateway"
+        echo "  S_DNS=$dns"
+        exit 0
+    fi
+}
+
+fnc_status(){
+    # nslookup 
+    if wget -q --spider https://nuclearsecrecy.com/nukemap/; then
+        echo "ACTIVO"
+    else
+        echo "INACTIVO"
+    fi
+}
+
+#####################################################
+## MAIN
+#####################################################
+
+MSG="Uso: $0 [start,stop,conf,status]"
+
+# comprovación numero de argumentos
+if [ $# -lt 1 ]; then
+    echo "$MSG"
+    exit 1
+fi
+
+opcion_1="$1"
+shift
+
+case $opcion_1 in
+    start)
+        fnc_start $@
+        ;;
+    stop)
+        fnc_stop $@
+        ;;
+    conf)
+        fnc_conf $@
+        ;;  
+    status)
+        fnc_status $@
+        ;;
+    *)
+        echo "$MSG"
+        exit 1
+        ;;
+esac

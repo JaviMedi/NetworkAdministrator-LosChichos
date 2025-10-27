@@ -1,0 +1,20 @@
+#!/usr/bin/expect -f
+set timeout 10
+log_user 0
+match_max 100000
+set comando "ifwan status"
+set prompt "LosChichos>"
+
+spawn socat - TCP:127.0.0.1:1234
+expect -re "\Q$prompt\E"
+send "$comando\r"
+expect -re "(.*)\Q$prompt\E"
+set raw_output $expect_out(1,string)
+regsub -all "^\Q$comando\E\s*" $raw_output "" output1
+set output2 [string trim $output1]
+
+puts $output2
+puts $raw_output
+
+send "exit\r"
+expect eof

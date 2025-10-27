@@ -1,0 +1,74 @@
+#!/bin/bash
+source /usr/local/LosChichos/system/func
+source /usr/local/LosChichos/conf/ifwan.conf
+
+####################################
+## Script de Enrrutamiento de Red ##
+####################################
+
+
+
+#########################################################
+## Funciones 
+#########################################################
+
+fnc_enr_start(){
+    echo "iniciar"
+    echo 1 > /proc/sys/net/ipv4/ip_forward
+    iptables -t nat -A POSTROUTING -o $enp -j MASQUERADE
+}
+
+fnc_enr_stop(){
+    echo "parar"
+    echo 0 > /proc/sys/net/ipv4/ip_forward
+    iptables -t nat -D POSTROUTING -o $enp -j MASQUERADE
+}
+
+
+fnc_enr_status(){
+    if [ $(cat /proc/sys/net/ipv4/ip_forward) -eq 1 ] && iptables -t nat -C POSTROUTING -o "$enp" -j MASQUERADE 2> /dev/null; then
+        echo "ACTIVO"
+    else
+        echo "PARADO"
+    fi
+    exit 1
+}
+
+#####################################################
+## MAIN
+#####################################################
+
+MSG2="Uso: $0 [start,stop,status]"
+
+estadoifwan=$(fnc_ifwan_status)
+if [ "$estadoifwan" == "INACTIVO" ]; then
+    echo "El servicio ifwan está Parado"
+    echo "Ejecutalo con ./ifwan"
+    exit 1
+fi
+
+# comprovación numero de argumentos
+if [ $# -lt 1 ]; then
+    echo "$MSG2"
+    exit 1
+fi
+
+
+
+
+case $1 in
+    start)
+        fnc_enr_start 
+        ;;
+    stop)
+        fnc_enr_stop 
+        ;;
+    status)
+        fnc_enr_status 
+        exit 0
+        ;;
+    *)
+        echo "$MSG2"
+        exit 1
+        ;;
+esac

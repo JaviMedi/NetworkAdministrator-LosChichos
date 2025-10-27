@@ -1,0 +1,34 @@
+#!/bin/bash
+
+#########################################################
+## Funciones 
+#########################################################
+
+fnc_ifwan_almacenar_conf(){
+    local nombre="$1"
+    local valor="$2"
+    local fichero="$3"
+
+    if grep -q "^${nombre}=" "$fichero" 2>/dev/null; then
+        sed -i "s/^${nombre}=.*/${nombre}=${valor}/" "$fichero"
+    else
+        echo "${nombre}=${valor}" >> "$fichero"
+    fi
+}
+
+fnc_ifwan_status(){
+    # nslookup 
+    if wget -q --spider https://nuclearsecrecy.com/nukemap/; then
+        echo "ACTIVO"
+    else
+        echo "INACTIVO"
+    fi
+}
+fnc_enrr_status(){
+    if [ $(cat /proc/sys/net/ipv4/ip_forward) -eq 1 ] && iptables -t nat -C POSTROUTING -o "$enp" -j MASQUERADE 2> /dev/null; then
+        echo "ACTIVO hola"
+    else
+        echo "PARADO"
+    fi
+    exit 1
+}
