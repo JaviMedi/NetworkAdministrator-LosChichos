@@ -1,6 +1,9 @@
 #!/bin/bash
-ifwanconf="/usr/local/LosChichos/conf/ifwan.conf"
+source /usr/local/LosChichos/conf/variables.conf
+
+ifwanconf=$DIR/$PROJECTO/$DIR_CONF/$CONF_IFWAN
 source $ifwanconf
+
 
 ####################################
 ## Script de configuracion de Red ##
@@ -11,7 +14,7 @@ source $ifwanconf
 #########################################################
 fnc_start() {
 
-    if [ $(fnc_status) == "ACTIVO" ]; then
+    if [ $(fnc_status) == "$ACTIVADO" ]; then
         echo "El servicio está activo"
         exit 1
     fi
@@ -41,12 +44,6 @@ fnc_start() {
 }
 
 fnc_stop(){
-
-    if  [ "$MODO" = "dhcp" ] && [ $(fnc_status) == "INACTIVO" ]; then
-        echo "El servicio está Parado"
-        exit 1
-    fi
-
     case $MODO in
         dhcp)
             echo "Parando DHCP..."
@@ -80,7 +77,7 @@ fnc_almacenar_conf(){
 
 fnc_conf(){
 
-    if [ $(fnc_status) == "ACTIVO" ]; then
+    if [ $(fnc_status) == "$ACTIVADO" ]; then
         fnc_stop
     fi
 
@@ -203,9 +200,9 @@ fnc_conf(){
 fnc_status(){
     # nslookup 
     if wget -q --spider https://nuclearsecrecy.com/nukemap/; then
-        echo "ACTIVO"
+        echo "$ACTIVADO"
     else
-        echo "INACTIVO"
+        echo "$DESACTIVADO"
     fi
 }
 

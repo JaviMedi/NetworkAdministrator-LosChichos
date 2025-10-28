@@ -48,13 +48,25 @@ th {
   background-color: #0055aa;        /* Azul más claro al pasar el mouse */
   box-shadow: 0px 4px 8px rgba(0,0,0,0.4);
 }
+.router-title {
+  text-align: center;               /* Centrado horizontal */
+  background-color: #003366;        /* Azul oscuro de panel */
+  color: white;                     /* Texto blanco */
+  padding: 15px 20px;               /* Espaciado */
+  border-radius: 10px;              /* Bordes redondeados */
+  font-family: Arial, sans-serif;   /* Fuente limpia */
+  font-size: 1.8em;                 /* Tamaño grande */
+  font-weight: bold;                /* Negrita */
+  box-shadow: 0px 3px 8px rgba(0,0,0,0.4); /* Sombra */
+  margin-bottom: 20px;              /* Separación inferior */
+}
 </style>
 </head>
 <body link="#E9AB17" vlink="#E9AB17" alink="#E9AB17">
 
 
 EOM
-echo "<h1 align="center">Administrant el Router "$HOSTNAME" amb "$PROMPT"</h1>"
+echo "<h1 class="router-title" align="center">Administrando el Router "$HOSTNAME"</h1>"
 /bin/cat << EOM
 
 <script>
