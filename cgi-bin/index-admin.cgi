@@ -30,6 +30,24 @@ th {
 .Estilo1 {color: #FF00FF}
 .Estilo2 {color: #000000}
 -->
+.router-button {
+  background-color: #003366;       /* Azul oscuro del header */
+  color: white;                     /* Texto blanco */
+  border: none;                     /* Sin borde */
+  border-radius: 8px;               /* Bordes redondeados */
+  padding: 10px 25px;               /* Tamaño cómodo */
+  font-size: 1em;                   /* Tamaño de texto */
+  font-weight: bold;                /* Texto en negrita */
+  cursor: pointer;                  /* Mano al pasar el ratón */
+  margin: 5px;                      /* Separación entre botones */
+  box-shadow: 0px 2px 5px rgba(0,0,0,0.3); /* Sombra suave */
+  transition: all 0.2s ease-in-out;
+}
+
+.router-button:hover {
+  background-color: #0055aa;        /* Azul más claro al pasar el mouse */
+  box-shadow: 0px 4px 8px rgba(0,0,0,0.4);
+}
 </style>
 </head>
 <body link="#E9AB17" vlink="#E9AB17" alink="#E9AB17">
@@ -42,7 +60,7 @@ echo "<h1 align="center">Administrant el Router "$HOSTNAME" amb "$PROMPT"</h1>"
 <script>
 function wan(){
 window.top.frames['menu'].location.href='/cgi-bin/menu-ifwan.cgi';
-window.top.frames['body'].location.href='/cgi-bin/ifwan.cgi?comand=status&';
+window.top.frames['body'].location.href='/cgi-bin/ifwan.cgi';
 }
 function enrutar(){
 window.top.frames['menu'].location.href='/cgi-bin/menu-enrutar.cgi';
@@ -54,8 +72,8 @@ window.top.frames['body'].location.href='/cgi-bin/enrutar.cgi';
   <tr>
     <td>
       <!-- Botons esquerra -->
-      <button onclick="wan()">WAN</button>
-      <button onclick="enrutar()">ENRUTAR</button>    
+      <button class="router-button" onclick="wan()">WAN</button>
+      <button class="router-button" onclick="enrutar()">ENRUTAR</button>    
   </tr>
 </table>
 

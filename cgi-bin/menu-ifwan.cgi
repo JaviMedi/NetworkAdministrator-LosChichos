@@ -36,9 +36,10 @@ h4{
 </style>
 </head>
 <body>
-<h4><a href="/cgi-bin/enrutar.cgi?comand=start&" target="body">Enrutar Start</a></h4>
-<h4><a href="/cgi-bin/enrutar.cgi?comand=stop&" target="body">Enrutar Stop</a></h4>
-<h4><a href="/cgi-bin/enrutar.cgi?comand=status&" target="body">Enrutar Status</a></h4>
+<h4><a href="/cgi-bin/ifwan.cgi?comand=start&" target="body">Ifwan start</a></h4>
+<h4><a href="/cgi-bin/ifwan.cgi?comand=stop&" target="body">Ifwan stop</a></h4>
+<h4><a href="/cgi-bin/ifwan.cgi?comand=status&" target="body">Ifwan status</a></h4>
+<h4><a href="/cgi-bin/configura-ifwan.cgi?"target="body">Ifwan config</a></h4>
 </body>
 </html>
 

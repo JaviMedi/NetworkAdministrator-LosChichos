@@ -7,7 +7,7 @@ echo ""
 <head>
   <meta charset="utf-8">
   <title>Hola món CGI</title>
-    <style>
+   <style>
 body {
   font-family: Arial, sans-serif;
   background-color: #eef3f8;
@@ -35,18 +35,24 @@ h3 {
 <body>
 EOM
 
-comand=$(echo "$QUERY_STRING" | sed -n 's/^.*comand=\([^&]*\).*$/\1/p')
+QUERY_STRING_DECODED=$(echo "$QUERY_STRING" | sed 's/+/ /g; s/%/\\x/g' | xargs -0 printf "%b")
 
+comand=$(echo "$QUERY_STRING_DECODED" | sed -n 's/.*comand=\([^&]*\).*/\1/p')
+mode=$(echo "$QUERY_STRING_DECODED" | sed -n 's/.*mode=\([^&]*\).*/\1/p')
+interfaz=$(echo "$QUERY_STRING_DECODED" | sed -n 's/.*interface=\([^&]*\).*/\1/p')
+ipmask=$(echo "$QUERY_STRING_DECODED" | sed -n 's/.*ipmask=\([^&]*\).*/\1/p')
+gtw=$(echo "$QUERY_STRING_DECODED" | sed -n 's/.*gtw=\([^&]*\).*/\1/p')
+dns=$(echo "$QUERY_STRING_DECODED" | sed -n 's/.*dns=\([^&]*\).*/\1/p')
 
-echo "<h3>Configuració ENRUTAMENT</h3><br><b>"
+echo "<h3>Configuració WAN</h3><br><b>"
 
 #expect /usr/local/LosChichos/scripts/exp_model
 {
-  echo "enrutar $comand"
+  echo "ifwan $comand $mode $interfaz $ipmask $gtw $dns"
   echo "exit"
 } | nc 127.0.0.1 1234 | sed 's/LosChichos>//g'
 #echo "$(/usr/local/LosChichos/system/client_srv_cli enrutar $comand) <br>"
-echo "</b>"
+
 
 /bin/cat << EOM
 </body>
