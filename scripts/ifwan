@@ -32,7 +32,7 @@ fnc_start() {
             ip a a $IP/$MASC dev $enp
             ip l s dev $enp up
             ip r a default via $GW
-            fnc_almacenar_conf "#DNS" "$S_DNS" "/etc/systemd/resolved.conf"
+            fnc_almacenar_conf "DNS" "$S_DNS" "/etc/systemd/resolved.conf"
             systemctl restart systemd-resolved
             ;;
         *)
@@ -77,13 +77,18 @@ fnc_almacenar_conf(){
 
 fnc_conf(){
 
+    if [ "$1" == "mostrar" ]; then
+        echo $MODO $enp $IP $MASC $GW $S_DNS
+        exit 0
+    fi
+
     if [ $(fnc_status) == "$ACTIVADO" ]; then
         fnc_stop
     fi
 
     #Comprobar Primer argumento [dhcp o manual]
     if [ "$1" != "dhcp" ] && [ "$1" != "manual" ]; then
-        echo "Error: modo no válido. Usa 'dhcp' o 'manual'."
+        echo "Error: modo no válido. Usa 'dhcp' , 'manual'."
         exit 1
     fi
     if [ $# -lt 1 ]; then

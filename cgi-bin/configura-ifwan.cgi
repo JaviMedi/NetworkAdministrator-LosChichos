@@ -1,4 +1,7 @@
 #!/bin/bash
+
+source /usr/local/LosChichos/conf/variables.conf
+
 echo "Content-type: text/html; charset=utf-8"
 echo ""
 
@@ -14,6 +17,16 @@ for iface in $interfaces; do
   fi
   interfaces_filtradas+=("$iface")
 done
+
+CONFIG=$(cd "$DIR"/"$PROJECTO"/"$DIR_SCRIPTS"/ && ./ifwan conf mostrar)
+conf_mode=$(echo "$CONFIG" | tr -s ' ' | cut -d' '  -f1 )
+conf_int=$(echo "$CONFIG" | tr -s ' ' | cut -d' '  -f2 )
+conf_ip=$(echo "$CONFIG" | tr -s ' ' | cut -d' '  -f3 )
+conf_masc=$(echo "$CONFIG" | tr -s ' ' | cut -d' '  -f4 )
+conf_pe=$(echo "$CONFIG" | tr -s ' ' | cut -d' '  -f5 )
+conf_dns=$(echo "$CONFIG" | tr -s ' ' | cut -d' ' -f6 )
+
+
 /bin/cat << EOM
 <html>
 <head>
@@ -72,6 +85,10 @@ function toggleManualFields() {
   var fields = document.getElementById('manualFields');
   fields.style.display = manualSelected ? 'block' : 'none';
 }
+
+window.addEventListener('DOMContentLoaded', function() {
+  toggleManualFields();
+});
 </script>
 </head>
 <body>
@@ -81,17 +98,35 @@ function toggleManualFields() {
 <h4>Modo de la Interfaz WAN</h4>
 
 <form action="/cgi-bin/ifwan.cgi" method="get">
-  <input type="radio" id="dhcp" name="mode" value="dhcp" checked onclick="toggleManualFields()">
-  <label for="dhcp">DHCP</label><br>
 
-  <input type="radio" id="manual" name="mode" value="manual" onclick="toggleManualFields()">
-  <label for="manual">Manual</label><br><br>
+EOM
 
+      dhcp_check=""
+      manual_check=""
+      if [[ "$conf_mode" == "manual" ]] then
+        manual_check="checked"
+      else  
+       dhcp_check="checked"
+      fi
+
+
+
+  echo '<input type="radio" id="dhcp" name="mode" value="dhcp" '$dhcp_check' onclick="toggleManualFields()">'
+ 
+   echo '<label for="dhcp">DHCP</label><br>'
+
+  echo '<input type="radio" id="manual" name="mode" value="manual" '$manual_check' onclick="toggleManualFields()">'
+  echo '<label for="manual">Manual</label><br><br>'
+/bin/cat << EOM
 <h4>Nombre de la Interfaz WAN</h4>
 EOM
 
 for iface in "${interfaces_filtradas[@]}"; do
-  echo "  <input type=\"radio\" id=\"$iface\" name=\"interface\" value=\"$iface\">"
+  if [ "$iface" == "$conf_int" ]; then 
+    echo "  <input type=\"radio\" id=\"$iface\" name=\"interface\" value=\"$iface\" checked>"
+  else
+    echo "  <input type=\"radio\" id=\"$iface\" name=\"interface\" value=\"$iface\">"
+  fi
   echo "  <label for=\"$iface\">$iface</label><br>"
 done
 
@@ -99,13 +134,19 @@ cat << EOM
 <br>
 <div id="manualFields" class="hidden-fields">
   <h4>Dirección IP y máscara</h4>
-  <input type="text" name="ipmask" placeholder="Ej: 192.168.1.100/24"><br><br>
+EOM
+  echo "<input type="text" name="ipmask" value= "$conf_ip"/"$conf_masc"><br><br>"
+cat << EOM
   <br>
   <h4>Dirección de Gateway</h4>
-  <input type="text" name="gtw" placeholder="Ej: 192.168.1.1"><br><br>
+EOM
+  echo "<input type="text" name="gtw" value='$conf_pe' placeholder="Ej: 192.168.1.1"><br><br>"
+cat << EOM
   <br>
   <h4>Dirección de Servidor DNS</h4>
-  <input type="text" name="dns" placeholder="Ej: 8.8.8.8"><br><br>
+EOM
+  echo "<input type="text" name="dns" value='$conf_dns' placeholder="Ej: 8.8.8.8"><br><br>"
+cat << EOM
   <br>
 </div>
 

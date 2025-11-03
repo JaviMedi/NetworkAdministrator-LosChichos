@@ -57,5 +57,3 @@ echo "<h3>Configuració WAN</h3><br><b>"
 /bin/cat << EOM
 </body>
 </html>
-EOM
-
