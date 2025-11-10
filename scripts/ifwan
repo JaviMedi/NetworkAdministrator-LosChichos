@@ -1,4 +1,5 @@
 #!/bin/bash
+
 source /usr/local/LosChichos/conf/variables.conf
 
 ifwanconf=$DIR/$PROJECTO/$DIR_CONF/$CONF_IFWAN
@@ -12,6 +13,27 @@ source $ifwanconf
 #########################################################
 ## Funciones 
 #########################################################
+fnc_status_rec(){
+        MAX_TIEMPO=20
+        INTERVALO=1
+        TIEMPO=0
+
+    echo "Comprobando conexión..."
+
+    while [ $TIEMPO -lt $MAX_TIEMPO ]; do
+        if [ "$(fnc_status)" == "$ACTIVADO" ]; then
+            echo "$ACTIVADO"
+            break
+        fi
+        sleep $INTERVALO
+        TIEMPO=$((TIEMPO + INTERVALO))
+    done
+
+    if [ $TIEMPO -ge $MAX_TIEMPO ]; then
+        echo "$DESACTIVADO (tiempo de espera agotado)"
+    fi
+}
+
 fnc_start() {
 
     if [ $(fnc_status) == "$ACTIVADO" ]; then
@@ -24,23 +46,35 @@ fnc_start() {
             echo "Iniciando DHCP..."
             ip l s dev $enp up
             dhcpcd $enp || echo "No se ha encontrado la tarjeta $enp"
+            sleep 2
+            fnc_status_rec
             ;;
         manual)
-            echo "has elegido el modo manual"
+            echo "Has elegido el modo manual"
             ip a flush dev $enp
             #echo "$IP/$MASC $enp $GW $S_DNS"
+            ip l s dev $enp 
             ip a a $IP/$MASC dev $enp
             ip l s dev $enp up
             ip r a default via $GW
             fnc_almacenar_conf "DNS" "$S_DNS" "/etc/systemd/resolved.conf"
             systemctl restart systemd-resolved
+            echo "Configuración aplicada correctamente:"
+            echo "  tarjeta=$enp"
+            echo "  IP=$IP"
+            echo "  Máscara=$MASC"
+            echo "  Gateway=$GW"
+            echo "  Servidor_DNS=$S_DNS"
+
+            echo "Conexión a Internet: " $(fnc_status)
+            exit 0
             ;;
         *)
             echo "Falta modo, ejecuta primero: $0 conf [dhcp,manual]"
             exit 1
             ;;
     esac
- 
+    
 }
 
 fnc_stop(){
@@ -61,6 +95,13 @@ fnc_stop(){
             exit 1
             ;;
     esac
+    
+    sleep 3
+    if [ $(fnc_status) == "$DESACTIVADO" ]; then
+        echo "$DESACTIVADO"
+    else
+        echo "$ACTIVADO"
+    fi
 }
 
 fnc_almacenar_conf(){
@@ -185,8 +226,7 @@ fnc_conf(){
         echo "Falta dirección servidor dns [default 8.8.8.8]"
         dns=8.8.8.8
     else
-        dns=$1echo "Falta dirección servidor dns [default 8.8.8.8]"
-        dns=8.8.8.8
+        dns=$1
     fi
     fnc_almacenar_conf "S_DNS" "$dns" "$ifwanconf"
 

@@ -1,26 +1,31 @@
 #!/bin/bash
 
 SCRIPTS_DIR="/usr/local/LosChichos/scripts"
+
+# Fuerza a que bash envíe cada línea sin buffer
+export LC_ALL=C
+export LANG=C
+# Desactiva el buffer de stdout
+
+perl -e 'select STDOUT; $| = 1;'
+
+
+
 while true; do
   # Mostrar prompt i llegir entrada de l'usuari
   echo -n "LosChichos> "
   read input_line
 
   #Comprobar ?
-  if [ "$input_line" = "?" ]; then
-    ls $SCRIPTS_DIR
+case "$input_line" in
+  "?")
+    ls "$SCRIPTS_DIR"
     continue
-  fi
-
-  #Comprobar que no es scr_cli
-  #if [ "$input_line" = "scr_cli" ]; then       Ya no es necesario
-  #  continue
-  #fi
-  
-  # Comprovar si l'usuari vol sortir
-  if [ "$input_line" = "exit" ]; then
+    ;;
+  "exit")
     break
-  fi
+    ;;
+esac
 
   # Separar la línia en array d'arguments
   # Utilitzem 'read -a' per separar per espais

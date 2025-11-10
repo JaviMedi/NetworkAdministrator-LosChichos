@@ -1,21 +1,17 @@
 #!/bin/bash
 
-source /usr/local/LosChichos/conf/variables.conf
+ls -la /usr/local/LosChichos/cgi-bin
+# buscar cabeceras o filtros que puedan afectar el streaming
+grep -RInE 'Content-Encoding|no-gzip|deflate|gzip|X-Accel-Buffering|Content-Length|AddOutputFilter|AddOutputFilterByType|SetOutputFilter|Header set|SetEnv no-gzip|mod_pagespeed' /usr/local/LosChichos/cgi-bin || true
+grep -RIn $'\r' /usr/local/LosChichos/cgi-bin || true
+grep -RInE 'select STDOUT; *\\$\\|=1|stdbuf|unbuffer' /usr/local/LosChichos/cgi-bin || true
+file /usr/local/LosChichos/cgi-bin/* | sed -n '1,200p'
+# con verbose para ver headers
+curl -v --no-buffer 'http://127.0.0.1/cgi-bin/ifwan.cgi?comand=status' 2>&1 | sed -n '1,200p'
 
-CONFIG=$(cd "$DIR"/"$PROJECTO"/"$DIR_SCRIPTS"/ && ./ifwan conf mostrar)
-conf_mode=$(echo "$CONFIG" | tr -s ' ' | cut -d' '  -f1 )
-conf_int=$(echo "$CONFIG" | tr -s ' ' | cut -d' '  -f2 )
-if [[ "$conf_mode" == "manual" ]] then
-	conf_ip=$(echo "$CONFIG" | tr -s ' ' | cut -d' '  -f3 )
-	conf_masc=$(echo "$CONFIG" | tr -s ' ' | cut -d' '  -f4 )
-	conf_pe=$(echo "$CONFIG" | tr -s ' ' | cut -d' '  -f5 )
-	conf_dns=$(echo "$CONFIG" | tr -s ' ' | cut -d' ' -f6 )
-fi
-
-echo $conf_mode
-echo $conf_int
-echo $conf_ip
-echo $conf_masc
-echo $conf_pe
-echo $conf_dns
-
+# forzar modo no-buffer y ver progresivo
+curl -N 'http://127.0.0.1/cgi-bin/ifwan.cgi?comand=status'
+apache2ctl -M | grep -E 'deflate|proxy|headers' || sudo apache2ctl -M | grep -E 'deflate|proxy|headers'
+a2query -m deflate || true
+# buscar directivas a nivel servidor/sites que afecten el filtro
+grep -RInE 'AddOutputFilter|AddOutputFilterByType|SetEnv no-gzip|SetOutputFilter' /etc/apache2 || true

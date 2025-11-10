@@ -1,15 +1,8 @@
 #!/bin/bash
-
-#trap "rm -f /tmp/f; echo 'Tuberia eliminada.'" EXIT
-
-#mkfifo /tmp/f
-#cat /tmp/f | /usr/local/LosChichos/system/scr_cli 2>&1 | nc -lk 127.0.0.1 1234 > /tmp/f
 IP_ADDR="127.0.0.1"
 PORT="1234"
 SCRIPT="/usr/local/LosChichos/system/scr_cli"
 
-while true; do
-    socat TCP-LISTEN:${PORT},reuseaddr,fork,bind=${IP_ADDR} EXEC:"${SCRIPT}"
-    echo "[INFO] Cliente desconectado, reiniciando escucha..."
-    sleep 1
-done
+socat TCP-LISTEN:${PORT},reuseaddr,fork,bind=${IP_ADDR} EXEC:"unbuffer -p ${SCRIPT}" # Usa unbuffer para desactivar el buffer y pasar la salida en tiempo real
+echo "[INFO] Cliente desconectado"
+

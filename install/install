@@ -7,9 +7,16 @@
 apt update
 apt install -y curl
 apt install -y net-tools
+
 apt install -y apache2
+e2enmod cgi
+service apache2 restart
+a2dismod -f deflate
+systemctl restart apache2
+
 apt install -y expect
 apt install -y socat
+apt install -y iw
 
 ## Desactivar NetworkManager
 echo "Desactivando NetworkManager.."
