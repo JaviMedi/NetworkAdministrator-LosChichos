@@ -33,6 +33,23 @@ h4{
   padding: 10px;
   border-radius: 5px;
 }
+h4:hover {
+  background: #d0e4f5;
+  cursor: pointer;
+  border-left-color: #0055aa;
+}
+h4:active {
+  background: #a6c8e0;
+  border-left-color: #002244;
+}
+h4 a {
+  text-decoration: none;
+  color: #003366;
+  display: block; 
+}
+h4 a:hover {
+  color: #001f3f;
+}
 </style>
 </head>
 <body>

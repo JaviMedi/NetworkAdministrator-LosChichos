@@ -1,5 +1,4 @@
 #!/bin/bash
-perl -e 'select STDOUT; $|=1;'  # desactiva buffering CGI
 echo "Content-type: text/html; charset=utf-8"
 echo ""
 
@@ -8,7 +7,7 @@ echo ""
 <head>
   <meta charset="utf-8">
   <title>Hola món CGI</title>
-   <style>
+    <style>
 body {
   font-family: Arial, sans-serif;
   background-color: #eef3f8;
@@ -34,23 +33,23 @@ h3 {
   </style>
 </head>
 <body>
-<pre>
 EOM
 
 QUERY_STRING_DECODED=$(echo "$QUERY_STRING" | sed 's/+/ /g; s/%/\\x/g' | xargs -0 printf "%b")
 
 comand=$(echo "$QUERY_STRING_DECODED" | sed -n 's/.*comand=\([^&]*\).*/\1/p')
 mode=$(echo "$QUERY_STRING_DECODED" | sed -n 's/.*mode=\([^&]*\).*/\1/p')
-interfaz=$(echo "$QUERY_STRING_DECODED" | sed -n 's/.*interface=\([^&]*\).*/\1/p')
-ipmask=$(echo "$QUERY_STRING_DECODED" | sed -n 's/.*ipmask=\([^&]*\).*/\1/p')
-gtw=$(echo "$QUERY_STRING_DECODED" | sed -n 's/.*gtw=\([^&]*\).*/\1/p')
-dns=$(echo "$QUERY_STRING_DECODED" | sed -n 's/.*dns=\([^&]*\).*/\1/p')
+v_b=$(echo "$QUERY_STRING_DECODED" | sed -n 's/.*v_b=\([^&]*\).*/\1/p')
+nombre=$(echo "$QUERY_STRING_DECODED" | sed -n 's/.*nombre=\([^&]*\).*/\1/p')
+vid=$(echo "$QUERY_STRING_DECODED" | sed -n 's/.*vid=\([^&]*\).*/\1/p')
+subnet=$(echo "$QUERY_STRING_DECODED" | sed -n 's/.*subnet=\([^&]*\).*/\1/p')
+gw=$(echo "$QUERY_STRING_DECODED" | sed -n 's/.*gw=\([^&]*\).*/\1/p')
 
-echo "<h3>Configuración WAN</h3><br><b>"
+echo "<h3>Configuración BRIDGE</h3><br><b>"
 
 
 {
-  echo "ifwan $comand $mode $interfaz $ipmask $gtw $dns"
+  echo "bridge $comand $mode $v_b $nombre $vid $subnet $gw"
   echo "exit"
 } | stdbuf -oL nc 127.0.0.1 1234 | sed -u 's/LosChichos>//g' | while IFS= read -r line; do
     printf '%s<br>\n' "$line"
@@ -61,6 +60,7 @@ done
 
 
 /bin/cat << EOM
-
 </body>
 </html>
+EOM
+

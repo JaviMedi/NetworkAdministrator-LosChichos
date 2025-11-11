@@ -78,6 +78,10 @@ function enrutar(){
 window.top.frames['menu'].location.href='/cgi-bin/menu-enrutar.cgi';
 window.top.frames['body'].location.href='/cgi-bin/enrutar.cgi';
 }
+function bridge(){
+window.top.frames['menu'].location.href='/cgi-bin/menu-bridge.cgi';
+window.top.frames['body'].location.href='/cgi-bin/bridge.cgi';
+}
 </script>
 
 <table width="100%">
@@ -85,7 +89,8 @@ window.top.frames['body'].location.href='/cgi-bin/enrutar.cgi';
     <td>
       <!-- Botons esquerra -->
       <button class="router-button" onclick="wan()">WAN</button>
-      <button class="router-button" onclick="enrutar()">ENRUTAR</button>    
+      <button class="router-button" onclick="enrutar()">ENRUTAR</button>  
+      <button class="router-button" onclick="bridge()">BRIDGE</button>   
   </tr>
 </table>
 

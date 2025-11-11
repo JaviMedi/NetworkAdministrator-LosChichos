@@ -38,7 +38,7 @@ EOM
 comand=$(echo "$QUERY_STRING" | sed -n 's/^.*comand=\([^&]*\).*$/\1/p')
 
 
-echo "<h3>Configuració ENRUTAMENT</h3><br><b>"
+echo "<h3>Configuración ENRUTAMIENTO</h3><br><b>"
 
 #expect /usr/local/LosChichos/scripts/exp_model
 {

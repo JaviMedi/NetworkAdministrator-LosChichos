@@ -1,6 +1,7 @@
 #!/bin/bash
 
-source /usr/local/JSBach/conf/variables.conf
+source /usr/local/LosChichos/conf/variables.conf
+source $DIR/$PROJECTO/$DIR_CONF/$FUNC
 
 ######################################################################
 ###  Funcions
@@ -8,6 +9,11 @@ source /usr/local/JSBach/conf/variables.conf
 
 fnc_iniciar()
 {
+    if fnc_enp_status "br0"; then
+        echo "El servei ja està actiu"
+        exit 1
+    fi
+    
 	echo "Iniciar"
 	
 	### FALTA ESTAT BRIDGE PER NO INICIAR SI JA ESTA FUNCIONANT
@@ -16,7 +22,7 @@ fnc_iniciar()
 	ip l a name br0 type bridge vlan_filtering 1
 	ip l s dev br0 up
 	
-	for LINIA in $(cat "$DIR/$PROJECTE/$DIR_CONF/$BRIDGE_CONF" | grep -v '^#'); do
+	for LINIA in $(cat "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF" | grep -v '^#'); do
 	    VLANID=$(echo "$LINIA"|cut -d';' -f2)
 	    VLANIP=$(echo "$LINIA"|cut -d';' -f4)
 	    ip l a l  br0 name br0.$VLANID  type vlan id $VLANID
@@ -26,7 +32,7 @@ fnc_iniciar()
 	
 	#Bridge part LAN
 	bridge vlan del dev br0 vid 1 pvid untagged self
-	for LINIA in $(cat "$DIR/$PROJECTE/$DIR_CONF/$BRIDGE_IF" | grep -v '^#'); do
+	for LINIA in $(cat "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_IF" | grep -v '^#'); do
 	 	NOM_IF=$(echo "$LINIA"|cut -d';' -f1)
 	 	VLAN_UNTAG=$(echo "$LINIA"|cut -d';' -f2)
 	 	VLAN_TAG=$(echo "$LINIA"|cut -d';' -f3)
@@ -49,7 +55,7 @@ fnc_iniciar()
 
 fnc_aturar()
 {
-	echo "Aturar"
+	echo "Parar"
 	ip l d dev br0
 }
 
@@ -57,14 +63,98 @@ fnc_aturar()
 fnc_configurar()
 {	
 	
-	echo "Configuracio guardada"
+	if [ $# -lt 1 ]; then
+        echo "Uso : $0 conf [mostrar, guardar, borrar]"
+        exit 1
+    fi
+    ARG1=$1
+    shift
+    case "$ARG1" in
+        show | mostrar)
+            if [ "$1" == "vlan" ]; then
+              cat "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF" | grep -v '^#'
+            fi
+            if [ "$1" == "bridge" ]; then
+              cat "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_IF" | grep -v '^#'
+            fi
+        ;;
+        save | guardar)
+            OPCIO_2=$1
+            shift
+            case "$OPCIO_2" in
+                vlan)
+                    if fnc_validar_ip_mascara "$3"; then
+                        R_VLAN=$3
+                    else
+                        echo "Error: La IP y máscara de red '$3' no es válida."
+                        exit 1
+                    fi
+                    if fnc_validar_ip_mascara "$4"; then
+                        GW_VLAN=$4
+                    else
+                        echo "Error: La IP y máscara de gateway '$4' no es válida."
+                        exit 1
+                    fi
+
+                    RESULTADO=$(grep -v ";$2;" "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF")
+                    echo "$RESULTADO" > "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF"
+                    echo "$1;$2;$R_VLAN;$GW_VLAN;" >> "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF"
+                    RESULTADO1=$(cat "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF")
+                    echo "$RESULTADO1"
+                ;;
+                bridge)
+                    
+                    if ! ip link show "$1" &>/dev/null; then
+                        echo "Error: la interfaz '$1' no existe en el sistema."
+                        echo "Interfaces disponibles:"
+                        ls /sys/class/net
+                        exit 1
+                    fi
+
+                    RESULTADO=$(grep -v ";$1;" "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_IF")
+                    echo "$RESULTADO" > "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_IF"
+                    echo "$1;$2;$3;" >> "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_IF"
+                ;;
+                *)
+                echo "error: opción no válida. Usa 'vlan' o 'bridge'."
+                exit 1
+                ;;
+            esac
+    
+        ;; 
+        delete | borrar) 
+            if [ "$1" == "vlan" ]; then
+                if [ "$2" -le 2 ]; then
+                    echo "No se puede borrar la vlan $2"
+                    exit 1
+                fi
+                RESULTADO=$(grep -v ";$2;" "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF")
+                echo "$RESULTADO" > "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF"
+                echo "$RESULTADO"
+            fi
+        ;;
+        *)
+        echo "error: opción no válida. Usa 'mostrar', 'guardar' o 'borrar'."
+        exit 1
+        ;;
+        esac
+
 }
 
 
 fnc_estat()
 {
-	 echo "$ACTIVADO"
-	 echo "$DESACTIVADO"	    
+	if fnc_enp_status "br0"; then
+        echo "$ACTIVADO"
+        for LINIA in $(cat "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF" | grep -v '^#'); do
+            VLANID=$(echo "$LINIA"|cut -d';' -f2)
+            ip -4 -br a show dev br0.$VLANID
+        done
+        bridge vlan show
+    else
+        echo "$DESACTIVADO"
+    fi
+    
 }
 
 
@@ -72,7 +162,7 @@ fnc_estat()
 ###  MAIN
 ######################################################################
 
-MSG="falta [iniciar, aturar, configurar ,estat]"
+MSG="USO: $0 [start, stop, conf, status]"
 
 # Comprovem que hi hagi almenys un argument (la opció)
 if [ $# -lt 1 ]; then
@@ -91,7 +181,7 @@ case "$OPCIO_1" in
   stop | aturar)
     fnc_aturar	$@
     ;; 
-  stop | configurar) 
+  conf | configurar) 
     fnc_configurar $@
     ;;
   status | estat) 

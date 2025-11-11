@@ -25,11 +25,12 @@ fnc_status_rec(){
             echo "$ACTIVADO"
             break
         fi
+        echo "."
         sleep $INTERVALO
-        TIEMPO=$((TIEMPO + INTERVALO))
+        let TIEMPO++
     done
 
-    if [ $TIEMPO -ge $MAX_TIEMPO ]; then
+    if [ $TIEMPO -gt $MAX_TIEMPO ]; then
         echo "$DESACTIVADO (tiempo de espera agotado)"
     fi
 }
@@ -45,7 +46,7 @@ fnc_start() {
         dhcp)
             echo "Iniciando DHCP..."
             ip l s dev $enp up
-            dhcpcd $enp || echo "No se ha encontrado la tarjeta $enp"
+            dhcpcd $enp &> /dev/null || echo "No se ha encontrado la tarjeta $enp"
             sleep 2
             fnc_status_rec
             ;;
@@ -81,7 +82,7 @@ fnc_stop(){
     case $MODO in
         dhcp)
             echo "Parando DHCP..."
-            dhcpcd -K $enp || echo "No se ha encontrado la tarjeta $enp"
+            dhcpcd -K $enp &> /dev/null || echo "No se ha encontrado la tarjeta $enp"
             ip a flush dev $enp
             ip l s dev $enp down
             ;;
