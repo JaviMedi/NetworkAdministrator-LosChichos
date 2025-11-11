@@ -1,0 +1,25 @@
+NETWORK ADMINISTRATOR
+Un proyecto que ayuda a administrar una red, convirtiendo un pc base linux en un todo en uno router, switch, firewall, etc.
+
+INSTALACIÓN:
+Ejecuta el instalador en /install
+(instala varios paquetes necesarios y desactiva el NetwokManager)
+
+USO:
+Ejecuta /system/srv_cli con permisos de sudo para iniciar el servicio
+Una vez iniciado te podras conectar a http://127.0.0.1/cgi-bin/main.cgi para la interfaz web.
+También puedes conectarte por socat[socat - TCP:127.0.0.1:1234] para acceder al CLI de esta herramienta desde consola.
+
+Las Utilidades actuales son las siguientes:
+
+ifwan: 
+    - Configuración de interfaces de red.
+    - Configuración de IPs, DNS, DHCP, etc.
+enrutar:
+    - Configuración de enrutamiento.
+    - Configuración de NAT y reglas de firewall.
+bridge: (en desarrollo, no se recomienda su uso aun)
+    - Configuración de puentes de red.
+    - Configuración de VLANs.
+
+Esta herramienta está aun en desarrollo, por lo que puede haber errores o funcionalidades faltantes. Se recomienda usarla con precaución y realizar copias de seguridad de la configuración de red antes de realizar cambios.
