@@ -18,7 +18,7 @@ ifwan:
 enrutar:
     - Configuración de enrutamiento.
     - Configuración de NAT y reglas de firewall.
-bridge: (en desarrollo, no se recomienda su uso aún)
+bridge:
     - Configuración de puentes de red.
     - Configuración de VLANs.
 
