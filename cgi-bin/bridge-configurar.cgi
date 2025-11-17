@@ -8,7 +8,7 @@ echo ""
 
 echo "<html><head><title>Gestió de VLANs</title>"
 echo "<meta charset='utf-8'>"
-echo "<style>
+echo "
 <style>
 body {
   font-family: Arial, sans-serif;
@@ -53,7 +53,6 @@ button {
 button:hover {
   background-color: #0055aa;
 }
-</style>
 </style>"
 echo "</head><body>"
 
@@ -103,22 +102,23 @@ echo "<h2>VLANS</h2>"
 echo "<table>"
 echo "<tr><th>Nom</th><th>VID</th><th>Subxarxa</th><th>Gateway</th><th>Accions</th></tr>"
 
-for ((i=2; i<${#VLANS[@]}; i++)); do
-    line="${VLANS[$i]}"
-    [ -z "$line" ] && continue
-    IFS=';' read -r nom vid subnet gw _ <<< "$line"
+ordenadas=$(printf "%s\n" "${VLANS[@]:2}" | sort -t ';' -k2,2n)
+
+# Recorrer ya ordenadas
+while IFS=';' read -r nom vid subnet gw _; do
+    [ -z "$nom" ] && continue
     echo "<tr><td>$nom</td><td>$vid</td><td>$subnet</td><td>$gw</td>"
     echo "<td>"
     echo "<button onclick=\"location.href='/cgi-bin/bridge-modificar.cgi?vid=$vid'\">Modificar</button>"
-    echo "<button onclick=\"location.href='/cgi-bin/bridge-esborrar.cgi?vid=$vid'\">Esborrar</button>"
+    echo "<button onclick=\"location.href='/cgi-bin/bridge-borrar.cgi?vid=$vid'\">Borrar</button>"
     echo "</td></tr>"
-done
+done <<< "$ordenadas"
 
 echo "</table>"
 
 # -------------------------------------------------------------------
 # Botó final
 # -------------------------------------------------------------------
-echo "<button onclick=\"location.href='/cgi-bin/bridge-nova-vlan.cgi'\">Crear nova VLAN</button>"
+echo "<button onclick=\"location.href='/cgi-bin/bridge-crear-vlan.cgi'\">Crear VLAN</button>"
 
 echo "</body></html>"

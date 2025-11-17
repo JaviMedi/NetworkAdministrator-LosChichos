@@ -87,17 +87,13 @@ button:hover {
   <input type="hidden" name="comand" value="conf">
   <input type="hidden" name="mode" value="guardar">
   <input type="hidden" name="v_b" value="vlan">
+  <input type="hidden" name="vid" value="$vid">
+  <input type='hidden' name='redirect' value='cgi-bin/bridge-configurar.cgi'>
 
   <table>
     <tr><th>Campo</th><th>Valor</th></tr>
     <tr><td>Nombre</td><td><input type="text" name="nombre" value="$nombre"></td></tr>
-EOM
-if [ "$vid" -gt "2" ]; then
-  echo "    <tr><td>VID</td><td><input type=\"text\" name=\"vid\" value=\"$vid\"></td></tr>"
-else
-  echo "    <tr><td>VID</td><td><input type=\"text\" name=\"vid\" value=\"$vid\" readonly></td></tr>"
-fi
-/bin/cat << EOM
+    <tr><td>VID</td><td><b>$vid</b></td></tr>
     <tr><td>Subred</td><td><input type="text" name="subnet" value="$subnet"></td></tr>
     <tr><td>Gateway</td><td><input type="text" name="gw" value="$gw"></td></tr>
   </table>

@@ -15,3 +15,34 @@ apache2ctl -M | grep -E 'deflate|proxy|headers' || sudo apache2ctl -M | grep -E 
 a2query -m deflate || true
 # buscar directivas a nivel servidor/sites que afecten el filtro
 grep -RInE 'AddOutputFilter|AddOutputFilterByType|SetEnv no-gzip|SetOutputFilter' /etc/apache2 || true
+
+EOM
+if [ "$vid" -gt "2" ]; then
+  echo "    <tr><td>VID</td><td><input type=\"text\" name=\"vid\" value=\"$vid\"></td></tr>"
+else
+  echo "    <tr><td>VID</td><td><input type=\"text\" name=\"vid\" value=\"$vid\" readonly></td></tr>"
+fi
+/bin/cat << EOM
+
+
+  <input type=\"hidden\" name=\"vid\" value=\"$vid\">
+    <tr><td>VID</td><td><b>$vid</b></td></tr>
+
+
+
+echo "<h2>VLANS</h2>"
+echo "<table>"
+echo "<tr><th>Nom</th><th>VID</th><th>Subxarxa</th><th>Gateway</th><th>Accions</th></tr>"
+
+for ((i=2; i<${#VLANS[@]}; i++)); do
+    line="${VLANS[$i]}"
+    [ -z "$line" ] && continue
+    IFS=';' read -r nom vid subnet gw _ <<< "$line"
+    echo "<tr><td>$nom</td><td>$vid</td><td>$subnet</td><td>$gw</td>"
+    echo "<td>"
+    echo "<button onclick=\"location.href='/cgi-bin/bridge-modificar.cgi?vid=$vid'\">Modificar</button>"
+    echo "<button onclick=\"location.href='/cgi-bin/bridge-esborrar.cgi?vid=$vid'\">Esborrar</button>"
+    echo "</td></tr>"
+done
+
+echo "</table>"

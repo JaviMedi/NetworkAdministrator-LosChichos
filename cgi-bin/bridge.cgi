@@ -37,6 +37,7 @@ EOM
 
 QUERY_STRING_DECODED=$(echo "$QUERY_STRING" | sed 's/+/ /g; s/%/\\x/g' | xargs -0 printf "%b")
 
+
 comand=$(echo "$QUERY_STRING_DECODED" | sed -n 's/.*comand=\([^&]*\).*/\1/p')
 mode=$(echo "$QUERY_STRING_DECODED" | sed -n 's/.*mode=\([^&]*\).*/\1/p')
 v_b=$(echo "$QUERY_STRING_DECODED" | sed -n 's/.*v_b=\([^&]*\).*/\1/p')
@@ -44,11 +45,27 @@ nombre=$(echo "$QUERY_STRING_DECODED" | sed -n 's/.*nombre=\([^&]*\).*/\1/p')
 vid=$(echo "$QUERY_STRING_DECODED" | sed -n 's/.*vid=\([^&]*\).*/\1/p')
 subnet=$(echo "$QUERY_STRING_DECODED" | sed -n 's/.*subnet=\([^&]*\).*/\1/p')
 gw=$(echo "$QUERY_STRING_DECODED" | sed -n 's/.*gw=\([^&]*\).*/\1/p')
+redirect=$(echo "$QUERY_STRING_DECODED" | sed -n 's/.*redirect=\([^&]*\).*/\1/p')
 
 echo "<h3>Configuración BRIDGE</h3><br><b>"
 
 
-{
+
+echo "<br>"
+# Esto es para redirigir de nuevo a la página de configuración tras hacer la acción y que no se muestre la salida del comando por pantalla 
+# (solo para páginas con redirect)
+if [ -n "$redirect" ]; then
+ {
+        echo "bridge $comand $mode $v_b $nombre $vid $subnet $gw"
+        echo "exit"
+    } | stdbuf -oL nc 127.0.0.1 1234 >/dev/null 2>&1 # Enviamos datos al servidor pero no recivimos, eliminando la salida
+    echo "<script>
+          setTimeout(function(){
+            window.location.href='/$redirect';
+          }, 200);
+          </script>"
+else # Si no hay redirect, mostramos la salida del comando, para el start, stop y status
+    {
   echo "bridge $comand $mode $v_b $nombre $vid $subnet $gw"
   echo "exit"
 } | stdbuf -oL nc 127.0.0.1 1234 | sed -u 's/LosChichos>//g' | while IFS= read -r line; do
@@ -56,6 +73,8 @@ echo "<h3>Configuración BRIDGE</h3><br><b>"
     # Forzar vaciado de salida HTML
     perl -e 'select STDOUT; $|=1;'
 done 
+echo "<br>"
+fi
 
 
 
