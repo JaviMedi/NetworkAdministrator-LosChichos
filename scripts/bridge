@@ -38,11 +38,11 @@ fnc_iniciar()
 	 	VLAN_TAG=$(echo "$LINIA"|cut -d';' -f3)
 	 	ip l s dev $NOM_IF master br0
 	 	bridge vlan del dev $NOM_IF vid 1 pvid untagged	
-	 	if [ ! -z $VLAN_UNTAG ]; then
+	 	if [ "$VLAN_UNTAG" != "0" ]; then
 	 		bridge vlan add dev $NOM_IF vid $VLAN_UNTAG pvid untagged
 	 		bridge vlan add dev br0 vid $VLAN_UNTAG self
 	 	fi
-	 	if [ ! -z $VLAN_TAG ]; then
+	 	if [ "$VLAN_TAG" != "0" ]; then
 	 		for CAMP in ${VLAN_TAG//,/ }; do
 	 			bridge vlan add dev $NOM_IF vid $CAMP 
 	 			bridge vlan add dev br0 vid $CAMP self
@@ -111,9 +111,13 @@ fnc_configurar()
                         exit 1
                     fi
 
-                    RESULTADO=$(grep -v ";$1;" "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_IF")
-                    echo "$RESULTADO" > "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_IF"
-                    echo "$1;$2;$3;" >> "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_IF"
+                    #RESULTADO=$(grep -v ";$1;" "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_IF")
+                    #echo "$RESULTADO" > "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_IF"
+                    #echo "$1;$2;$3;" >> "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_IF"
+
+                    sed -i "/$1;/d" "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_IF"
+                    echo $@ | sed 's/ /;/g' >> "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_IF"
+                    cat "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_IF"
                 ;;
                 *)
                 echo "error: opción no válida. Usa 'vlan' o 'bridge'."

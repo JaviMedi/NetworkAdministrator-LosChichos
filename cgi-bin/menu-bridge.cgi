@@ -56,7 +56,8 @@ h4 a:hover {
 <h4><a href="/cgi-bin/bridge.cgi?comand=start&" target="body">Bridge Start</a></h4>
 <h4><a href="/cgi-bin/bridge.cgi?comand=stop&" target="body">Bridge Stop</a></h4>
 <h4><a href="/cgi-bin/bridge.cgi?comand=status&" target="body">Bridge Status</a></h4>
-<h4><a href="/cgi-bin/bridge-configurar.cgi?" target="body">Bridge Configurar</a></h4>
+<h4><a href="/cgi-bin/bridge-configurar.cgi?" target="body">Bridge Configurar VLAN</a></h4>
+<h4><a href="/cgi-bin/bridge-configurar-taguntag.cgi?" target="body">Bridge Configurar TAG/UNTAG</a></h4>
 </body>
 </html>
 

@@ -35,6 +35,9 @@ h3 {
 <body>
 EOM
 
+
+
+
 QUERY_STRING_DECODED=$(echo "$QUERY_STRING" | sed 's/+/ /g; s/%/\\x/g' | xargs -0 printf "%b")
 
 
@@ -46,6 +49,10 @@ vid=$(echo "$QUERY_STRING_DECODED" | sed -n 's/.*vid=\([^&]*\).*/\1/p')
 subnet=$(echo "$QUERY_STRING_DECODED" | sed -n 's/.*subnet=\([^&]*\).*/\1/p')
 gw=$(echo "$QUERY_STRING_DECODED" | sed -n 's/.*gw=\([^&]*\).*/\1/p')
 redirect=$(echo "$QUERY_STRING_DECODED" | sed -n 's/.*redirect=\([^&]*\).*/\1/p')
+enp=$(echo "$QUERY_STRING" | sed -n 's/^.*enp=\([^&]*\).*$/\1/p')
+tag=$(echo "$QUERY_STRING" | sed -n 's/^.*tag=\([^&]*\).*$/\1/p')
+untag=$(echo "$QUERY_STRING" | sed -n 's/^.*untag=\([^&]*\).*$/\1/p')
+
 
 echo "<h3>Configuración BRIDGE</h3><br><b>"
 
@@ -55,6 +62,19 @@ echo "<br>"
 # Esto es para redirigir de nuevo a la página de configuración tras hacer la acción y que no se muestre la salida del comando por pantalla 
 # (solo para páginas con redirect)
 if [ -n "$redirect" ]; then
+
+  if [ -n "$enp" ]; then
+     {
+        echo "bridge $comand $mode $v_b $enp $untag $tag"
+        echo "exit"
+    } | stdbuf -oL nc 127.0.0.1 1234 >/dev/null 2>&1
+    echo "<script>
+          setTimeout(function(){
+            window.location.href='/$redirect';
+          }, 200);
+          </script>"
+
+  else
  {
         echo "bridge $comand $mode $v_b $nombre $vid $subnet $gw"
         echo "exit"
@@ -64,6 +84,8 @@ if [ -n "$redirect" ]; then
             window.location.href='/$redirect';
           }, 200);
           </script>"
+  fi
+
 else # Si no hay redirect, mostramos la salida del comando, para el start, stop y status
     {
   echo "bridge $comand $mode $v_b $nombre $vid $subnet $gw"
