@@ -60,11 +60,10 @@ echo "</head><body>"
 # Aquí posem la comanda o fitxer que genera les VLANs
 # -------------------------------------------------------------------
 VLAN_DATA=$(cd "$DIR"/"$PROJECTO"/"$DIR_SCRIPTS"/ && ./bridge conf show vlan)
-
-
+VLAN_DATA_SORTED=$(printf "%s\n" "$VLAN_DATA" | sort -t';' -k2,2n) # Ordenem por VID
 
 # Llegim totes les línies en un array
-mapfile -t VLANS <<< "$VLAN_DATA"
+mapfile -t VLANS <<< "$VLAN_DATA_SORTED"
 
 # Comprovem que tinguem almenys dues línies
 if [ "${#VLANS[@]}" -lt 2 ]; then

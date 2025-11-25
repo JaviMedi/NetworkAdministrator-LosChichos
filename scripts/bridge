@@ -36,7 +36,15 @@ fnc_iniciar()
 	 	NOM_IF=$(echo "$LINIA"|cut -d';' -f1)
 	 	VLAN_UNTAG=$(echo "$LINIA"|cut -d';' -f2)
 	 	VLAN_TAG=$(echo "$LINIA"|cut -d';' -f3)
-	 	ip l s dev $NOM_IF master br0
+        WAN_IF=$(ip route show default | awk '/default/ {print $5}')
+        case "$NOM_IF" in # Esto es para no añadir la interfaz de salida al bridge, y el propio bridge
+        br0|"$WAN_IF")
+            continue
+            ;;
+        *)
+            ip l s dev "$NOM_IF" master br0
+            ;;
+        esac
 	 	bridge vlan del dev $NOM_IF vid 1 pvid untagged	
 	 	if [ "$VLAN_UNTAG" != "0" ]; then
 	 		bridge vlan add dev $NOM_IF vid $VLAN_UNTAG pvid untagged

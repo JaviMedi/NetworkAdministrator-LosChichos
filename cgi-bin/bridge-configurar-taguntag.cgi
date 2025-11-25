@@ -13,7 +13,7 @@ for iface in $interfaces; do
   if [[ "$iface" == "lo" ]]; then
     continue  
   fi
-  if [[ "$iface" == br* ]]; then
+  if [[ $iface == br0.* ]]; then  
     continue  
   fi
   if [[ -d "/sys/class/net/$iface/wireless" ]]; then
