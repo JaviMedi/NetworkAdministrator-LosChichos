@@ -82,6 +82,10 @@ function bridge(){
 window.top.frames['menu'].location.href='/cgi-bin/menu-bridge.cgi';
 window.top.frames['body'].location.href='/cgi-bin/bridge.cgi';
 }
+function tallafocs(){
+window.top.frames['menu'].location.href='/cgi-bin/tallafocs-menu.cgi';
+window.top.frames['body'].location.href='/cgi-bin/tallafocs.cgi?comand=estat&';
+}
 </script>
 
 <table width="100%">
@@ -91,6 +95,7 @@ window.top.frames['body'].location.href='/cgi-bin/bridge.cgi';
       <button class="router-button" onclick="wan()">WAN</button>
       <button class="router-button" onclick="enrutar()">ENRUTAR</button>  
       <button class="router-button" onclick="bridge()">BRIDGE</button>   
+      <button class="router-button" onclick="tallafocs()">FIREWALL</button>    
   </tr>
 </table>
 
