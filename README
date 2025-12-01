@@ -21,5 +21,8 @@ enrutar:
 bridge:
     - Configuración de puentes de red.
     - Configuración de VLANs.
+firewall: (aún en desarrollo)
+    - Configuración de reglas de firewall.
+    - Configuración de listas blancas y negras.
 
 Esta herramienta está aun en desarrollo, por lo que puede haber errores o funcionalidades faltantes. Se recomienda usarla con precaución y realizar copias de seguridad de la configuración de red antes de realizar cambios.
