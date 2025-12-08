@@ -17,6 +17,7 @@ systemctl restart apache2
 apt install -y expect
 apt install -y socat
 apt install -y iw
+apt install -y dbus-x11
 
 ## Desactivar NetworkManager
 echo "Desactivando NetworkManager.."
@@ -28,3 +29,4 @@ echo
 echo "NetworkManager desactivado."
 
 ## EDITAR VISUDO PARA EL SCRIPT TALLAFOCS
+## ip n l

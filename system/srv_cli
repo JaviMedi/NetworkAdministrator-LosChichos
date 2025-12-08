@@ -6,3 +6,5 @@ SCRIPT="/usr/local/LosChichos/system/scr_cli"
 socat TCP-LISTEN:${PORT},reuseaddr,fork,bind=${IP_ADDR} EXEC:"unbuffer -p ${SCRIPT}" # Usa unbuffer para desactivar el buffer y pasar la salida en tiempo real
 echo "[INFO] Cliente desconectado"
 
+
+trap "sudo pkill -f ./srv_cli" EXIT

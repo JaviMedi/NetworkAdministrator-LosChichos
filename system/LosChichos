@@ -1,0 +1,34 @@
+#!/bin/bash
+source /usr/local/LosChichos/conf/variables.conf
+source $DIR/$PROJECTO/$DIR_CONF/$FUNC
+
+
+if ! fnc_es_root; then
+    echo "Este script no se debe ejecutar como root. Saliendo..."
+    exit 1
+fi
+
+case $1 in
+    start)
+        fnc_escribir_vivo "Iniciando Los Chichos..." 0.1
+        systemctl stop NetworkManager
+        gnome-terminal -- bash -c "sudo ./srv_cli"
+        exit 0
+        ;;
+    stop)
+        fnc_escribir_vivo "Parando Los Chichos..." 0.1
+        pkill -f srv_cli
+        systemctl start NetworkManager
+        exit 0
+        ;;
+    restart)
+        fnc_escribir_vivo "Reiniciado........" 0.1
+        pkill -f srv_cli
+        gnome-terminal -- bash -c "sudo ./srv_cli"
+        exit 0
+        ;;
+    *)
+        echo "Uso: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac

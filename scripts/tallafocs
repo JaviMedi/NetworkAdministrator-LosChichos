@@ -19,12 +19,21 @@ fnc_iniciar()
 	    iptables -N $nom
 	    iptables -A FORWARD -s $ip -j $nom	    
 	done
+
+	# Cadena ports_wls
+	iptables -N ports_wls
+	for linia in $(grep -v '#' "$DIR/$PROJECTO/$DIR_CONF/$PORTS_WLS"); do
+	    prot=$(echo "$linia"|cut -d';' -f1)
+	    num_port=$(echo "$linia"|cut -d';' -f2)
+		iptables -A ports_wls -p $prot --dport $num_port -j ACCEPT
+	done
+	iptables -A ports_wls -j DROP
 	
 }
 
 fnc_aturar()
 {
-	echo "Aturar"
+	echo "Parar"
 	iptables -F
 	iptables -X
 	iptables -P FORWARD ACCEPT
@@ -58,23 +67,53 @@ fnc_configurar()
 			
 	# Fem switch per executar la funció que toca
 	case "$ARG_1" in
-	  desconnectar)
+	  	desconnectar)
 	        linia=$(cat "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF"| grep ";$1;" )
 	        nom=$( echo $linia | cut -d';' -f1)
+			vid=$( echo $linia | cut -d';' -f2)
 	        if [ -z "$nom" ]; then
-		    echo "Error no existeix vlan $1"
-		else
-		    iptables -F $nom
+		    	echo "Error no existeix vlan $1"
+			else
+		    	iptables -F $nom
+
+			#Añadimos las excepciones de ips_wls.conf
+			for ipwls in $(grep -v '#' "$DIR/$PROJECTO/$DIR_CONF/$IPS_WLS" | grep "^$vid;"); do
+				ip=$(echo "$ipwls"|cut -d';' -f2)
+				mac=$(echo "$ipwls"|cut -d';' -f3)
+				iptables -A $nom -s $ip -m mac --mac-source $mac -j ACCEPT
+			
+			done
+
 		    iptables -A $nom -j DROP
-		fi
+			fi
 	  	;;
-	  connectar)
+	  	connectar)
 	        linia=$(cat "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF"| grep ";$1;" )
 	        nom=$( echo $linia | cut -d';' -f1)
 	        if [ -z "$nom" ]; then
 		    	echo "Error no existeix vlan $1"
 		else
 			iptables -F $nom
+		fi	        
+	  	;;
+		connectar_port_wls)
+	        linia=$(cat "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF"| grep ";$1;" )
+	        nom=$( echo $linia | cut -d';' -f1)
+	        if [ -z "$nom" ]; then
+		    	echo "Error no existeix vlan $1"
+		else
+			iptables -F $nom
+			# IPs Privilegiadas
+			vid=$( echo $linia | cut -d';' -f2)
+			for ipwls in $(grep -v '#' "$DIR/$PROJECTO/$DIR_CONF/$IPS_WLS" | grep "^$vid;"); do
+				ip=$(echo "$ipwls"|cut -d';' -f2)
+				mac=$(echo "$ipwls"|cut -d';' -f3)
+				iptables -A $nom -s $ip -m mac --mac-source $mac -j ACCEPT
+			
+			done
+
+			iptables -A $nom -j ports_wls
+
 		fi	        
 	  	;;
 	  *)
@@ -110,6 +149,8 @@ fnc_estat()
 			fi
 		    if sudo iptables -C $nom -j DROP 2>/dev/null; then
 			    echo "DESCONNECTADA"
+			elif sudo iptables -S "$nom" 2>/dev/null | grep -q "\-j ports_wls"; then
+   				echo "CONNECTADA-PORTS-WLS"
 			else
 			    echo "CONNECTADA"
 			fi 
