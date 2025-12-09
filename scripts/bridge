@@ -25,7 +25,7 @@ fnc_iniciar()
 	for LINIA in $(cat "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF" | grep -v '^#'); do
 	    VLANID=$(echo "$LINIA"|cut -d';' -f2)
 	    VLANIP=$(echo "$LINIA"|cut -d';' -f4)
-	    ip l a l  br0 name br0.$VLANID  type vlan id $VLANID
+	    ip l a l br0 name br0.$VLANID type vlan id $VLANID
 	    ip l s dev br0.$VLANID up
 	    ip a a dev br0.$VLANID $VLANIP
 	done

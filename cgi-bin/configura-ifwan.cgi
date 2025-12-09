@@ -15,6 +15,9 @@ for iface in $interfaces; do
   if [[ -d "/sys/class/net/$iface/wireless" ]]; then
     continue  
   fi
+  if [[ "$iface" == br* ]]; then
+    continue  
+  fi
   interfaces_filtradas+=("$iface")
 done
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source /usr/local/JSBach/conf/variables.txt
+source /usr/local/LosChichos/conf/variables.txt
 
 echo "Content-Type:text/html;charset=utf-8"
 /bin/cat << EOM
@@ -66,7 +66,9 @@ th {
 
 
 EOM
-echo "<h1 class="router-title" align="center">Administrando el Router "$HOSTNAME"</h1>"
+echo "<h1><a href='/cgi-bin/main.cgi' class="router-title" align="center" target='_top'>Administrando el Router "$HOSTNAME"</a></h1>"
+# echo "<h1><a href='/cgi-bin/tu_pagina.cgi' target='_top'>Administracio de $HOSTNAME</a></h1>"
+
 /bin/cat << EOM
 
 <script>

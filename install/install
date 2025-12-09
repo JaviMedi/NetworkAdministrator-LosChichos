@@ -29,4 +29,25 @@ echo
 echo "NetworkManager desactivado."
 
 ## EDITAR VISUDO PARA EL SCRIPT TALLAFOCS
+USUARIO="www-data"
+SUDO_FILE="/etc/sudoers.d/${USUARIO}-iptables"
+REGLA="${USUARIO} ALL=(ALL) NOPASSWD: /usr/sbin/iptables"
+
+if ! id "$USUARIO" &>/dev/null; then
+    echo "El usuario $USUARIO no existe"
+    exit 1
+fi
+
+echo "$REGLA" > "$SUDO_FILE"
+
+chmod 440 "$SUDO_FILE"
+
+if visudo -cf "$SUDO_FILE"; then
+    echo "Regla sudoers válida"
+    echo "$USUARIO puede usar iptables sin contraseña"
+else
+    echo "ERROR en sintaxis sudoers, no se aplica"
+    rm -f "$SUDO_FILE"
+    exit 1
+fi
 ## ip n l

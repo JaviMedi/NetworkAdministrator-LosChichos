@@ -33,7 +33,7 @@ echo '<title>Administracio de '$HOSTNAME'</title>'
 <frameset rows="18%,82%" frameborder="1">
 <frame src="/cgi-bin/index-admin.cgi" name="menu-general" noresize="noresize">
 <frameset cols="20%,80%">
-<frame src="/cgi-bin/cos-admin.cgi" name="menu" noresize="noresize">
+<frame src="/cgi-bin/estado.cgi" name="menu" noresize="noresize">
 <frame src="/cgi-bin/hola.cgi" name="body" noresize="noresize">
 </frameset>
 </frameset>

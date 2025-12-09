@@ -84,12 +84,13 @@ for linia in $(grep -v '#' "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF"); do
 		  	echo "<h2>  $nom $ip <span class='status-green'>$estat_vlan</span></h2>"
 	    	echo "<a href='tallafocs-conndeconn.cgi?id=$id&accio=desconnectar'><button type='button'>DESCONECTAR</button></a>"
 	    elif [ $estat_vlan == "DESCONNECTADA" ]; then
-			echo "<h2>  $nom $ip <span class='status-red'>$estat_vlan</span></h2>"
+			  echo "<h2>  $nom $ip <span class='status-red'>$estat_vlan</span></h2>"
 	     	echo "<a href='tallafocs-conndeconn.cgi?id=$id&accio=connectar'><button type='button'>CONNECTAR</button></a>"
-			echo "<a href='tallafocs-conndeconn.cgi?id=$id&accio=connectar_port_wls'><button type='button'>CONNECTAR PORTS WLS</button></a>"
+			  echo "<a href='tallafocs-conndeconn.cgi?id=$id&accio=connectar_port_wls'><button type='button'>CONNECTAR PORTS WLS</button></a>"
 		elif [ $estat_vlan == "CONNECTADA-PORTS-WLS" ]; then
-			echo "<h2>  $nom $ip <span class='status-yellow'>$estat_vlan</span></h2>"
+			  echo "<h2>  $nom $ip <span class='status-yellow'>$estat_vlan</span></h2>"
 	    	echo "<a href='tallafocs-conndeconn.cgi?id=$id&accio=desconnectar'><button type='button'>DESCONECTAR</button></a>"
+        echo "<a href='tallafocs-conndeconn.cgi?id=$id&accio=connectar'><button type='button'>CONNECTAR SIN RESTRICCIONES</button></a>"
 		else 
 			echo "<h2>  $nom $ip <span class='status-yellow'>$estat_vlan</span></h2>"
 	    fi

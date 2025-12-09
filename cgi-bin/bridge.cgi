@@ -87,14 +87,12 @@ if [ -n "$redirect" ]; then
   fi
 
 else # Si no hay redirect, mostramos la salida del comando, para el start, stop y status
-    {
+{
   echo "bridge $comand $mode $v_b $nombre $vid $subnet $gw"
   echo "exit"
-} | stdbuf -oL nc 127.0.0.1 1234 | sed -u 's/LosChichos>//g' | while IFS= read -r line; do
-    printf '%s<br>\n' "$line"
-    # Forzar vaciado de salida HTML
-    perl -e 'select STDOUT; $|=1;'
-done 
+} | stdbuf -oL nc 127.0.0.1 1234 \
+  | sed -u 's/LosChichos>//g' \
+  | aha
 echo "<br>"
 fi
 

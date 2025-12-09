@@ -7,17 +7,21 @@ source $DIR/$PROJECTE/$DIR_CONF/$CONF_IFWAN
 
 
 interfaces=$(ls /sys/class/net)
+WAN_IF=$(ip route show default | awk '/default/ {print $5}')
 
 interfaces_filtradas=()
 for iface in $interfaces; do
   if [[ "$iface" == "lo" ]]; then
     continue  
   fi
-  if [[ $iface == br0.* ]]; then  
+  if [[ $iface == br* ]]; then  
     continue  
   fi
   if [[ -d "/sys/class/net/$iface/wireless" ]]; then
     continue  
+  fi
+  if [[ "$iface" == "$WAN_IF" ]]; then
+    continue
   fi
   interfaces_filtradas+=("$iface")
 done

@@ -14,6 +14,10 @@ source $DIR/$PROJECTO/$DIR_CONF/$CONF_IFWAN
 #########################################################
 
 fnc_enr_start(){
+    if fnc_enr_status | grep -q "$ACTIVADO"; then
+        echo "El enrutamiento ya está activado"
+        exit 1
+    fi
     echo "$ACTIVADO"
     echo 1 > /proc/sys/net/ipv4/ip_forward
     iptables -t nat -A POSTROUTING -o $enp -j MASQUERADE

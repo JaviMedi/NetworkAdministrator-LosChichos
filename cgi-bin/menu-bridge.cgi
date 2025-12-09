@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source /usr/local/JSBach/conf/variables.txt
+source /usr/local/LosChichos/conf/variables.txt
 
 
 /bin/cat << EOM
