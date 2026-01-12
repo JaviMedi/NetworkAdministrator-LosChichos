@@ -7,7 +7,8 @@ echo "Content-type: text/html; charset=utf-8"
 echo ""
 
 
-enp=$(echo "$QUERY_STRING" | sed -n 's/^.*enp=\([^&]*\).*$/\1/p')
+raw_enp=$(echo "$QUERY_STRING" | sed -n 's/^.*enp=\([^&]*\).*$/\1/p')
+enp=$(printf '%b' "${raw_enp//%/\\x}")
 
 echo "<html><head><title>Modificar VLAN</title>"
 echo "<meta charset='utf-8'>"

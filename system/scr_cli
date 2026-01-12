@@ -2,6 +2,9 @@
 
 SCRIPTS_DIR="/usr/local/LosChichos/scripts"
 
+set +o notify
+trap '' HUP
+
 # Fuerza a que bash envíe cada línea sin buffer
 export LC_ALL=C
 export LANG=C

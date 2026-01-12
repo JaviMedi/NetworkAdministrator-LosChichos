@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source /usr/local/LosChichos/conf/variables.txt
+source /usr/local/LosChichos/conf/variables.conf
 
 
 /bin/cat << EOM

@@ -1,10 +1,79 @@
 #!/bin/bash
+source /usr/local/LosChichos/conf/variables.conf
+
+SERVICE=loschichos.socket
+SERVICE_UNIT=loschichos@.service
 IP_ADDR="127.0.0.1"
 PORT="1234"
-SCRIPT="/usr/local/LosChichos/system/scr_cli"
-
-socat TCP-LISTEN:${PORT},reuseaddr,fork,bind=${IP_ADDR} EXEC:"unbuffer -p ${SCRIPT}" # Usa unbuffer para desactivar el buffer y pasar la salida en tiempo real
-echo "[INFO] Cliente desconectado"
 
 
-trap "sudo pkill -f ./srv_cli" EXIT
+case "$1" in
+  install)
+    echo "Instalando servicio LosChichos..."
+
+    cat > /etc/systemd/system/loschichos.socket <<EOF
+[Unit]
+Description=LosChichos TCP socket
+
+[Socket]
+ListenStream=${IP_ADDR}:${PORT}
+Accept=yes
+MaxConnections=20
+
+[Install]
+WantedBy=sockets.target
+EOF
+
+    cat > /etc/systemd/system/loschichos@.service <<EOF
+[Unit]
+Description=LosChichos session
+
+[Service]
+ExecStart=${DIR}/${PROJECTO}/${DIR_SYSTEM}/scr_cli
+StandardInput=socket
+StandardOutput=socket
+StandardError=socket
+KillMode=process
+TimeoutStopSec=5
+EOF
+
+    systemctl daemon-reexec
+    systemctl daemon-reload
+    systemctl enable --now loschichos.socket
+
+    echo "Servicio instalado y escuchando en $IP_ADDR:$PORT"
+    ;;
+
+  start)
+    systemctl start $SERVICE
+    ;;
+
+  stop)
+    systemctl stop $SERVICE
+    ;;
+
+  restart)
+    systemctl restart $SERVICE
+    ;;
+
+  status)
+    systemctl status $SERVICE
+    ;;
+  uninstall)
+    echo "Desinstalando servicio LosChichos..."
+
+    systemctl disable --now $SERVICE
+    rm -f /etc/systemd/system/loschichos.socket
+    rm -f /etc/systemd/system/loschichos@.service
+
+    systemctl daemon-reexec
+    systemctl daemon-reload
+
+    echo "Servicio desinstalado."
+    ;;
+
+  *)
+    echo "Uso: srv_cli {install|uninstall|start|stop|restart|status}"
+    ;;
+esac
+

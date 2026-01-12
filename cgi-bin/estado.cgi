@@ -9,7 +9,7 @@ estado_ifwan() {
 }
 
 estado_enrutar() {
-    cd $DIR/$PROJECTO/$DIR_SCRIPTS/ && ./enrutar status | tail -n +2
+  cd $DIR/$PROJECTO/$DIR_SCRIPTS/ && ./enrutar status | tail -n +2 
 }
 
 estado_bridge() {

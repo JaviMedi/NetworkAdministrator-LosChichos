@@ -86,7 +86,7 @@ for linia in $(grep -v '#' "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF"); do
 	    elif [ $estat_vlan == "DESCONNECTADA" ]; then
 			  echo "<h2>  $nom $ip <span class='status-red'>$estat_vlan</span></h2>"
 	     	echo "<a href='tallafocs-conndeconn.cgi?id=$id&accio=connectar'><button type='button'>CONNECTAR</button></a>"
-			  echo "<a href='tallafocs-conndeconn.cgi?id=$id&accio=connectar_port_wls'><button type='button'>CONNECTAR PORTS WLS</button></a>"
+			  echo "<a href='tallafocs-conndeconn.cgi?id=$id&accio=connectar_port_wls'><button type='button'>CONNECTAR WLS PUERTOS</button></a>"
 		elif [ $estat_vlan == "CONNECTADA-PORTS-WLS" ]; then
 			  echo "<h2>  $nom $ip <span class='status-yellow'>$estat_vlan</span></h2>"
 	    	echo "<a href='tallafocs-conndeconn.cgi?id=$id&accio=desconnectar'><button type='button'>DESCONECTAR</button></a>"
@@ -94,10 +94,80 @@ for linia in $(grep -v '#' "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF"); do
 		else 
 			echo "<h2>  $nom $ip <span class='status-yellow'>$estat_vlan</span></h2>"
 	    fi
-	    echo "<br>" 
+	  
 	    
 done
+echo "<br>"
+echo "<br>"
+echo "<h2> </h2>" 
+echo "<br>"
+echo "<h2> WHITELIST PUERTOS</h2>" 
+/bin/cat << EOM
 
+<table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse;">
+  <thead>
+    <tr>
+      <th>Protocol</th>
+      <th>Port</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+EOM
+
+#Ports WLS
+
+for linia in $(grep -v '#' "$DIR/$PROJECTO/$DIR_CONF/$PORTS_WLS"); do
+	    PROTOCOL=$(echo "$linia"|cut -d';' -f1)
+	    PORT=$(echo "$linia"|cut -d';' -f2) 
+	    echo "<tr>"
+	    echo "<td>$PROTOCOL</td>"
+	    echo "<td>$PORT</td>"
+	    echo "<td>"
+	    echo "<a href='tallafocs-ports-wls.cgi?accio=eliminar_port_wls&protocol=$PROTOCOL&port=$PORT'><button type='button'>Eliminar</button></a>"
+	    echo "</td>"
+	    echo "</tr>"	   
+done
+echo "</tbody>"
+echo "</table>"
+echo "<a href='tallafocs-nova-port-wls.cgi?'><button type='button'>Añadir puerto</button></a>"
+
+echo "<br>"
+echo "<br>"
+echo "<h2> </h2>" 
+echo "<br>"
+echo "<h2> IPS CON ACCESO SIN RESTRINGIR</h2>" 
+/bin/cat << EOM
+
+<table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse;">
+  <thead>
+    <tr>
+      <th>vid</th>
+      <th>ip</th>
+      <th>mac</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+EOM
+
+for linia in $(grep -v '#' "$DIR/$PROJECTO/$DIR_CONF/$IPS_WLS"); do
+	    VID=$(echo "$linia"|cut -d';' -f1)
+	    IP=$(echo "$linia"|cut -d';' -f2) 
+	    MAC=$(echo "$linia"|cut -d';' -f3) 
+	    echo "<tr>"
+	    echo "<td>$VID</td>"
+	    echo "<td>$IP</td>"
+	    echo "<td>$MAC</td>"
+	    echo "<td>"
+	    echo "<a href='tallafocs-ips-wls.cgi?accio=eliminar_ip_wls&vid=$VID&ip=$IP&mac=$MAC'><button type='button'>Eliminar</button></a>"
+	    echo "</td>"
+	    echo "</tr>"	   
+done
+echo "</tbody>"
+echo "</table>"
+echo "<a href='tallafocs-nova-ip-wls.cgi?'><button type='button'>Añadir ip</button></a>"
+#echo "<button onclick=\"location.href='/cgi-bin/tallafocs-nova-ip-wls.cgi?'\">Añadir ip</button>"
 
 /bin/cat << EOM
 </body>

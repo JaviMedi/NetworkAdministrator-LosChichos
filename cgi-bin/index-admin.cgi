@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source /usr/local/LosChichos/conf/variables.txt
+source /usr/local/LosChichos/conf/variables.conf
 
 echo "Content-Type:text/html;charset=utf-8"
 /bin/cat << EOM

@@ -1,7 +1,6 @@
 #!/bin/bash
 
-source /usr/local/LosChichos/conf/variables.conf
-
+source /usr/local/JSBach/conf/variables.conf
 
 ######################################################################
 ###  Funcions
@@ -9,23 +8,22 @@ source /usr/local/LosChichos/conf/variables.conf
 
 fnc_iniciar()
 {
-	fnc_aturar >/dev/null 2>&1
-	echo "Iniciar"	
+	fnc_aturar > /dev/null 2>&1 
+	echo "Iniciant tallafocs"	
 		
 	
-	for linia in $(grep -v '#' "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF"); do
+	for linia in $(grep -v '#' "$DIR/$PROJECTE/$DIR_CONF/$BRIDGE_CONF"); do
 	    nom=$(echo "$linia"|cut -d';' -f1)
 	    ip=$(echo "$linia"|cut -d';' -f3)
 	    iptables -N $nom
 	    iptables -A FORWARD -s $ip -j $nom	    
 	done
-
-	# Cadena ports_wls
+	
 	iptables -N ports_wls
-	for linia in $(grep -v '#' "$DIR/$PROJECTO/$DIR_CONF/$PORTS_WLS"); do
-	    prot=$(echo "$linia"|cut -d';' -f1)
+	for linia in $(grep -v '#' "$DIR/$PROJECTE/$DIR_CONF/$PORTS_WLS"); do
+	    protocol=$(echo "$linia"|cut -d';' -f1)
 	    num_port=$(echo "$linia"|cut -d';' -f2)
-		iptables -A ports_wls -p $prot --dport $num_port -j ACCEPT
+	    iptables -A ports_wls -p $protocol --dport $num_port -j ACCEPT	    
 	done
 	iptables -A ports_wls -j DROP
 	
@@ -33,7 +31,7 @@ fnc_iniciar()
 
 fnc_aturar()
 {
-	echo "Parar"
+	echo "Aturar tallafocs"
 	iptables -F
 	iptables -X
 	iptables -P FORWARD ACCEPT
@@ -41,15 +39,15 @@ fnc_aturar()
 	iptables -P OUTPUT ACCEPT
 	
 	
-	resultat=$(cd $DIR/$PROJECTO/$DIR_SCRIPTS/ && ./enrutar status)
+	resultat=$($DIR/$PROJECTE/$DIR_SCRIPTS/enrutar estat)
 
 	# Comprovem si conté la paraula "ACTIVAT"
-	echo "$resultat" | grep -q "$ACTIVADO"
+	echo "$resultat" | grep -q "$ACTIVAT"
 
 	if [ $? -eq 0 ]; then
 		iptables -t nat -F 
 		iptables -t nat -X
-		cd $DIR/$PROJECTO/$DIR_SCRIPTS/ && ./enrutar start
+		$DIR/$PROJECTE/$DIR_SCRIPTS/enrutar iniciar > /dev/null 2>&1 
 	else
 		iptables -t nat -F 
 		iptables -t nat -X
@@ -58,8 +56,7 @@ fnc_aturar()
 
 
 fnc_configurar()
-{	
-	
+{		
 	echo "Configuracio"
 	
 	ARG_1=$1
@@ -67,28 +64,26 @@ fnc_configurar()
 			
 	# Fem switch per executar la funció que toca
 	case "$ARG_1" in
-	  	desconnectar)
-	        linia=$(cat "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF"| grep ";$1;" )
+	  desconnectar)
+	        linia=$(cat "$DIR/$PROJECTE/$DIR_CONF/$BRIDGE_CONF"| grep ";$1;" )
 	        nom=$( echo $linia | cut -d';' -f1)
-			vid=$( echo $linia | cut -d';' -f2)
+	        vid=$( echo $linia | cut -d';' -f2)
 	        if [ -z "$nom" ]; then
-		    	echo "Error no existeix vlan $1"
-			else
-		    	iptables -F $nom
-
-			#Añadimos las excepciones de ips_wls.conf
-			for ipwls in $(grep -v '#' "$DIR/$PROJECTO/$DIR_CONF/$IPS_WLS" | grep "^$vid;"); do
-				ip=$(echo "$ipwls"|cut -d';' -f2)
-				mac=$(echo "$ipwls"|cut -d';' -f3)
-				iptables -A $nom -s $ip -m mac --mac-source $mac -j ACCEPT
-			
+		    echo "Error no existeix vlan $1"
+		else
+		    iptables -F $nom
+		        # IPs privilegiades
+		     	for ipwls in $(grep -v '#' "$DIR/$PROJECTE/$DIR_CONF/$IPS_WLS"| grep "^$vid;"); do
+			    ip=$(echo "$ipwls"|cut -d';' -f2)
+			    mac=$(echo "$ipwls"|cut -d';' -f3)
+			    iptables -A $nom   -s $ip -m mac --mac-source $mac -j ACCEPT 
 			done
 
 		    iptables -A $nom -j DROP
-			fi
+		fi
 	  	;;
-	  	connectar)
-	        linia=$(cat "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF"| grep ";$1;" )
+	  connectar)
+	        linia=$(cat "$DIR/$PROJECTE/$DIR_CONF/$BRIDGE_CONF"| grep ";$1;" )
 	        nom=$( echo $linia | cut -d';' -f1)
 	        if [ -z "$nom" ]; then
 		    	echo "Error no existeix vlan $1"
@@ -96,43 +91,42 @@ fnc_configurar()
 			iptables -F $nom
 		fi	        
 	  	;;
-		connectar_port_wls)
-	        linia=$(cat "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF"| grep ";$1;" )
+          connectar_port_wls)
+	        linia=$(cat "$DIR/$PROJECTE/$DIR_CONF/$BRIDGE_CONF"| grep ";$1;" )
 	        nom=$( echo $linia | cut -d';' -f1)
+	        vid=$( echo $linia | cut -d';' -f2)
 	        if [ -z "$nom" ]; then
 		    	echo "Error no existeix vlan $1"
 		else
 			iptables -F $nom
-			# IPs Privilegiadas
-			vid=$( echo $linia | cut -d';' -f2)
-			for ipwls in $(grep -v '#' "$DIR/$PROJECTO/$DIR_CONF/$IPS_WLS" | grep "^$vid;"); do
-				ip=$(echo "$ipwls"|cut -d';' -f2)
-				mac=$(echo "$ipwls"|cut -d';' -f3)
-				iptables -A $nom -s $ip -m mac --mac-source $mac -j ACCEPT
-			
+		 	# IPs privilegiades
+			for ipwls in $(grep -v '#' "$DIR/$PROJECTE/$DIR_CONF/$IPS_WLS"| grep "^$vid;"); do
+			    ip=$(echo "$ipwls"|cut -d';' -f2)
+			    mac=$(echo "$ipwls"|cut -d';' -f3)
+			    iptables -A $nom   -s $ip -m mac --mac-source $mac -j ACCEPT 
 			done
-
+			
 			iptables -A $nom -j ports_wls
-
+			
 		fi	        
 	  	;;
-		afegir_port_wls)
-	  	echo "$1;$2;" >> "$DIR/$PROJECTO/$DIR_CONF/$PORTS_WLS"
-	    ;;
-		eliminar_port_wls)
+	  afegir_port_wls)
+	  	echo "$1;$2;" >> "$DIR/$PROJECTE/$DIR_CONF/$PORTS_WLS"
+	        ;;
+	  eliminar_port_wls)
 	        PROTO="$1"
-			PORT="$2"
-			sed -i "/^${PROTO};${PORT};$/d" "$DIR/$PROJECTO/$DIR_CONF/$PORTS_WLS"
-	    ;;  
-	  	afegir_ip_wls)
-	  		echo "$1;$2;$3;" >> "$DIR/$PROJECTO/$DIR_CONF/$IPS_WLS"
-	    ;;
-	  	eliminar_ip_wls)
+		PORT="$2"
+		sed -i "/^${PROTO};${PORT};$/d" "$DIR/$PROJECTE/$DIR_CONF/$PORTS_WLS"
+	        ;;  
+	  afegir_ip_wls)
+	  	echo "$1;$2;$3;" >> "$DIR/$PROJECTE/$DIR_CONF/$IPS_WLS"
+	        ;;
+	  eliminar_ip_wls)
 	        VID="$1"
-			IP="$2"
-			MAC="$3"
-			sed -i "/^${VID};${IP};${MAC};$/d" "$DIR/$PROJECTO/$DIR_CONF/$IPS_WLS"
-	    ;;    
+		IP="$2"
+		MAC="$3"
+		sed -i "/^${VID};${IP};${MAC};$/d" "$DIR/$PROJECTE/$DIR_CONF/$IPS_WLS"
+	        ;;    
 	  *)
 	        echo "Error  argumnets conectar, desconectar"
 	        ;;
@@ -155,21 +149,19 @@ fnc_estat()
 		 exit 1
 	fi
 	
-	        linia=$(cat "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF"| grep ";$1;" )
+	        linia=$(cat "$DIR/$PROJECTE/$DIR_CONF/$BRIDGE_CONF"| grep ";$1;" )
 	        nom=$( echo $linia | cut -d';' -f1)
 	        if [ -z "$nom" ]; then
 		    echo "Error no existeix vlan $1"
 		else
-			if ! sudo iptables -L "$nom" -n >/dev/null 2>&1; then
-    			echo "Error: no existe la cadena de reglas"
-    			exit 1
-			fi
-		    if sudo iptables -C $nom -j DROP 2>/dev/null; then
+		     	if iptables -C $nom -j DROP 2>/dev/null; then
 			    echo "DESCONNECTADA"
-			elif sudo iptables -S "$nom" 2>/dev/null | grep -q "\-j ports_wls"; then
-   				echo "CONNECTADA-PORTS-WLS"
 			else
-			    echo "CONNECTADA"
+			    if iptables -C $nom -j ports_wls  2>/dev/null; then
+				echo "CONNECTADA PORT WLS"
+			    else
+			    	echo "CONNECTADA"
+			    fi
 			fi 
 		fi
 }
@@ -192,20 +184,21 @@ shift
 
 # Fem switch per executar la funció que toca
 case "$OPCIO_1" in
-  iniciar | start)
+  iniciar)
     fnc_iniciar  $@
     ;;
-  aturar | stop)
+  aturar)
     fnc_aturar	$@
     ;; 
-  configurar | conf) 
+  configurar) 
     fnc_configurar $@
     ;;
-  estat | status) 
+  estat) 
     fnc_estat $@
     ;;
   *)
     echo "$MSG"
     ;;
 esac
+
 

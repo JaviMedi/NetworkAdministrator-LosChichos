@@ -14,13 +14,13 @@ source $DIR/$PROJECTO/$DIR_CONF/$CONF_IFWAN
 #########################################################
 
 fnc_enr_start(){
-    if fnc_enr_status | grep -q "$ACTIVADO"; then
+    if [ $(cat /proc/sys/net/ipv4/ip_forward) -eq 1 ] && iptables -t nat -C POSTROUTING -o "$enp" -j MASQUERADE 2> /dev/null; then
         echo "El enrutamiento ya está activado"
         exit 1
     fi
-    echo "$ACTIVADO"
     echo 1 > /proc/sys/net/ipv4/ip_forward
     iptables -t nat -A POSTROUTING -o $enp -j MASQUERADE
+    echo "$ACTIVADO"
 }
 
 fnc_enr_stop(){
@@ -32,7 +32,7 @@ fnc_enr_stop(){
 
 fnc_enr_status(){
     echo "Estado del Enrutamiento: "
-    if [ $(cat /proc/sys/net/ipv4/ip_forward) -eq 1 ] && iptables -t nat -C POSTROUTING -o "$enp" -j MASQUERADE 2> /dev/null; then
+    if [ $(cat /proc/sys/net/ipv4/ip_forward) -eq 1 ] && sudo iptables -t nat -C POSTROUTING -o "$enp" -j MASQUERADE 2> /dev/null; then
         echo "$ACTIVADO"
     else
         echo "$DESACTIVADO"

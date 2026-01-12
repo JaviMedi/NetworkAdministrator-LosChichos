@@ -50,8 +50,10 @@ subnet=$(echo "$QUERY_STRING_DECODED" | sed -n 's/.*subnet=\([^&]*\).*/\1/p')
 gw=$(echo "$QUERY_STRING_DECODED" | sed -n 's/.*gw=\([^&]*\).*/\1/p')
 redirect=$(echo "$QUERY_STRING_DECODED" | sed -n 's/.*redirect=\([^&]*\).*/\1/p')
 enp=$(echo "$QUERY_STRING" | sed -n 's/^.*enp=\([^&]*\).*$/\1/p')
-tag=$(echo "$QUERY_STRING" | sed -n 's/^.*tag=\([^&]*\).*$/\1/p')
-untag=$(echo "$QUERY_STRING" | sed -n 's/^.*untag=\([^&]*\).*$/\1/p')
+raw_tag=$(echo "$QUERY_STRING" | sed -n 's/^.*tag=\([^&]*\).*$/\1/p')
+  tag=$(printf '%b' "${raw_tag//%/\\x}")
+raw_untag=$(echo "$QUERY_STRING" | sed -n 's/^.*untag=\([^&]*\).*$/\1/p')
+  untag=$(printf '%b' "${raw_untag//%/\\x}")
 
 
 echo "<h3>Configuración BRIDGE</h3><br><b>"
