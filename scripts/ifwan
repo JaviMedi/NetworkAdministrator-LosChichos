@@ -38,10 +38,10 @@ fnc_status_rec(){
 
 fnc_start() {
 
-    if [ $(fnc_status) == "$ACTIVADO" ]; then
-        echo "El servicio está activo"
-        exit 1
-    fi
+    #if [ $(fnc_status) == "$ACTIVADO" ]; then
+    #    echo "El servicio está activo"
+    #    exit 1
+    #fi
 
     case $MODO in
         dhcp)
@@ -125,9 +125,9 @@ fnc_conf(){
         exit 0
     fi
 
-    if [ $(fnc_status) == "$ACTIVADO" ]; then
-        fnc_stop
-    fi
+    #if [ $(fnc_status) == "$ACTIVADO" ]; then
+    #    fnc_stop
+    #fi
 
     #Comprobar Primer argumento [dhcp o manual]
     if [ "$1" != "dhcp" ] && [ "$1" != "manual" ]; then

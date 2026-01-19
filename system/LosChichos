@@ -13,6 +13,7 @@ case $1 in
         fnc_escribir_vivo "Iniciando Los Chichos..." 0.1
         systemctl stop NetworkManager
         gnome-terminal -- bash -c "sudo ./srv_cli"
+        fnc_escribir_vivo "Los Chichos iniciado." 0.1
         exit 0
         ;;
     stop)

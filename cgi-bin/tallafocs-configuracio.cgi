@@ -80,10 +80,20 @@ for linia in $(grep -v '#' "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF"); do
 	    ip=$(echo "$linia"|cut -d';' -f3)
 	    #estat_vlan=$("$DIR"/"$PROJECTE"/"$DIR_SCRIPTS"/client_srv_cli tallafocs estat $id)
 		estat_vlan=$(cd /usr/local/LosChichos/scripts/ && ./tallafocs estat $id)
+    estat_aislar=$(cd /usr/local/LosChichos/scripts/ && ./tallafocs estat aislar $id)
 	    if [ $estat_vlan == "CONNECTADA" ]; then
 		  	echo "<h2>  $nom $ip <span class='status-green'>$estat_vlan</span></h2>"
 	    	echo "<a href='tallafocs-conndeconn.cgi?id=$id&accio=desconnectar'><button type='button'>DESCONECTAR</button></a>"
+        #if [ "$estat_aislar" == "DESACTIVADO" ]; then
+        #  echo "<a href='tallafocs-aislar.cgi?id=$id&accio=aislar'><button type='button'>AISLAR</button></a>"
+        #elif [ "$estat_aislar" == "ACTIVADO" ]; then
+        #  echo "<a href='tallafocs-aislar.cgi?id=$id&accio=desaislar'><button type='button'>DESAISLAR</button></a>"
+        #fi
+        echo "<a href='tallafocs-aislar.cgi?id=$id&accio=aislar'><button type='button'>AISLAR</button></a>"
+        echo "<a href='tallafocs-aislar.cgi?id=$id&accio=desaislar'><button type='button'>DESAISLAR</button></a>"
 	    elif [ $estat_vlan == "DESCONNECTADA" ]; then
+        echo "<a href='tallafocs-aislar.cgi?id=$id&accio=aislar'><button type='button'>AISLAR</button></a>"
+        echo "<a href='tallafocs-aislar.cgi?id=$id&accio=desaislar'><button type='button'>DESAISLAR</button></a>"
 			  echo "<h2>  $nom $ip <span class='status-red'>$estat_vlan</span></h2>"
 	     	echo "<a href='tallafocs-conndeconn.cgi?id=$id&accio=connectar'><button type='button'>CONNECTAR</button></a>"
 			  echo "<a href='tallafocs-conndeconn.cgi?id=$id&accio=connectar_port_wls'><button type='button'>CONNECTAR WLS PUERTOS</button></a>"
