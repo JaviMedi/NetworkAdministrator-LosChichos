@@ -38,7 +38,7 @@ fnc_iniciar()
 	done
 	iptables -A ports_wls -j DROP
 
-	## DMZ_ISOLATION
+	## Cadena DMZ_ISOLATION
 
 	iptables -t filter -N DMZ_ISOLATION 2>/dev/null
 	iptables -t filter -F DMZ_ISOLATION
@@ -229,6 +229,8 @@ fnc_estat()
 			    echo "DESCONNECTADA"
 			elif sudo iptables -S "$nom" 2>/dev/null | grep -q "\-j ports_wls"; then
    				echo "CONNECTADA-PORTS-WLS"
+			elif sudo iptables -C $nom -j DMZ_ISOLATION 2>/dev/null; then
+				echo "CONNECTADA-AISLADA"
 			else
 			    echo "CONNECTADA"
 			fi 
