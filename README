@@ -6,7 +6,7 @@ Ejecuta el instalador en /install
 (instala varios paquetes necesarios y desactiva el NetwokManager)
 
 USO:
-Ejecuta /system/srv_cli {install|uninstall|start|stop|restart|status} con permisos de sudo.
+Ejecuta /install/install {install|uninstall|start|stop|restart|status} con permisos de sudo.
 Una vez iniciado te podras conectar a http://127.0.0.1/cgi-bin/main.cgi para la interfaz web.
 También puedes conectarte por socat[socat - TCP:127.0.0.1:1234] para acceder al CLI de esta herramienta desde consola.
 

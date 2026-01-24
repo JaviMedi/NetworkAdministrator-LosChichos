@@ -4,13 +4,18 @@
 ## Script de Instalación ##
 ###########################
 
-#!/bin/bash
 source /usr/local/LosChichos/conf/variables.conf
 
 SERVICE=loschichos.socket
 SERVICE_UNIT=loschichos@.service
 IP_ADDR="127.0.0.1"
 PORT="1234"
+
+
+if [[ "$EUID" -ne 0 ]]; then
+	echo "Yeeeee, ejecuta esto como root anda..." >&2
+	exit 1
+fi
 
 
 case "$1" in
@@ -20,8 +25,26 @@ apt install -y curl
 apt install -y net-tools
 
 apt install -y apache2
-e2enmod cgi
-service apache2 restart
+
+## mierda de cgi
+
+a2enmod cgi
+cat > /etc/apache2/conf-available/loschichos-cgi.conf <<'EOF'
+ScriptAlias /cgi-bin/ /usr/local/LosChichos/cgi-bin/
+
+<Directory "/usr/local/LosChichos/cgi-bin">
+    AllowOverride None
+    Options +ExecCGI -MultiViews +SymLinksIfOwnerMatch
+    Require all granted
+    AddHandler cgi-script .cgi
+</Directory>
+EOF
+
+a2enconf loschichos-cgi
+systemctl restart apache2
+
+## Esto debería funcionar, no se... 
+
 a2dismod -f deflate
 systemctl restart apache2
 
