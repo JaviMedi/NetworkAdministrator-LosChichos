@@ -8,7 +8,54 @@ PORT="1234"
 
 
 case "$1" in
-  install)
+  install | -y)
+apt update
+apt install -y curl
+apt install -y net-tools
+
+apt install -y apache2
+e2enmod cgi
+service apache2 restart
+a2dismod -f deflate
+systemctl restart apache2
+
+apt install -y expect
+apt install -y socat
+apt install -y iw
+apt install -y dbus-x11
+
+## Desactivar NetworkManager
+echo "Desactivando NetworkManager.."
+
+systemctl stop NetworkManager
+systemctl disable NetworkManager
+echo
+
+echo "NetworkManager desactivado."
+
+## EDITAR VISUDO PARA EL SCRIPT TALLAFOCS
+USUARIO="www-data"
+SUDO_FILE="/etc/sudoers.d/${USUARIO}-iptables"
+REGLA="${USUARIO} ALL=(ALL) NOPASSWD: /usr/sbin/iptables"
+
+if ! id "$USUARIO" &>/dev/null; then
+    echo "El usuario $USUARIO no existe"
+    exit 1
+fi
+
+echo "$REGLA" > "$SUDO_FILE"
+
+chmod 440 "$SUDO_FILE"
+
+if visudo -cf "$SUDO_FILE"; then
+    echo "Regla sudoers válida"
+    echo "$USUARIO puede usar iptables sin contraseña"
+else
+    echo "ERROR en sintaxis sudoers, no se aplica"
+    rm -f "$SUDO_FILE"
+    exit 1
+fi
+
     echo "Instalando servicio LosChichos..."
 
     cat > /etc/systemd/system/loschichos.socket <<EOF
