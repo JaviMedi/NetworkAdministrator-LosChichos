@@ -3,6 +3,8 @@ Un proyecto que ayuda a administrar una red, convirtiendo un pc base linux en un
 
 INSTALACIÓN:
 Ejecuta el instalador en /install
+:sudo ./install -y para llevar a cabo la instalación
+Revisa el script antes de ejecutarlo (no se te ocurra ejecutar un script desconocido en tu equipo)
 (instala varios paquetes necesarios y desactiva el NetwokManager)
 
 USO:
