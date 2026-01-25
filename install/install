@@ -6,6 +6,28 @@
 
 source /usr/local/LosChichos/conf/variables.conf
 
+
+
+fnc_copia_ficheros()
+{
+	ORIGEN="../"
+	DESTINO="/usr/local"
+	NOMBRE_CARPETA=LosChichos
+	DESTINO_FINAL="$DESTINO/$NOMBRE_CARPETA"
+
+	echo "Copiando ficheros a $DESTINO_FINAL..."
+
+	# Copiar carpeta
+	cp -r "$ORIGEN" "$DESTINO_FINAL"
+
+	# Asegurar propietario root:root
+	chown -R root:root "$DESTI_FINAL"
+
+	echo "Ajustar permisos de $DESTINO_FINAL"
+	chmod -R 755 $DESTINO_FINAL
+}
+
+
 SERVICE=loschichos.socket
 SERVICE_UNIT=loschichos@.service
 IP_ADDR="127.0.0.1"
@@ -20,6 +42,7 @@ fi
 
 case "$1" in
   install | -y)
+fnc_copia_ficheros
 apt update
 apt install -y curl
 apt install -y net-tools
