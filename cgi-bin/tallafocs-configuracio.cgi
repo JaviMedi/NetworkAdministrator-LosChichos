@@ -84,6 +84,8 @@ for linia in $(grep -v '#' "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF"); do
 		  	echo "<h2>  $nom $ip <span class='status-green'>$estat_vlan</span></h2>"
 	    	echo "<a href='tallafocs-conndeconn.cgi?id=$id&accio=desconnectar'><button type='button'>DESCONECTAR</button></a>"
         echo "<a href='tallafocs-aislar.cgi?id=$id&accio=aislar'><button type='button'>AISLAR</button></a>"
+        echo "<a href='tallafocs-aislar.cgi?id=$id&accio=connectar_admin'><button type='button'>CONECTAR A ADMIN</button></a>"
+        echo "<a href='tallafocs-conndeconn.cgi?id=$id&accio=connectar_port_wls'><button type='button'>APLICAR WLS PUERTOS</button></a>"
 	    elif [ $estat_vlan == "DESCONNECTADA" ]; then
 			  echo "<h2>  $nom $ip <span class='status-red'>$estat_vlan</span></h2>"
 	     	echo "<a href='tallafocs-conndeconn.cgi?id=$id&accio=connectar'><button type='button'>CONNECTAR</button></a>"
@@ -96,6 +98,11 @@ for linia in $(grep -v '#' "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF"); do
         echo "<h2>  $nom $ip <span class='status-yellow'>$estat_vlan</span></h2>"
         echo "<a href='tallafocs-conndeconn.cgi?id=$id&accio=desconnectar'><button type='button'>DESCONECTAR</button></a>"
         echo "<a href='tallafocs-aislar.cgi?id=$id&accio=desaislar'><button type='button'>DESAISLAR</button></a>"
+      elif [[ "$estat_vlan" == "CONNECTADA-CON-ADMIN" ]]; then
+        echo "<h2>  $nom $ip <span class='status-green'>$estat_vlan</span></h2>"
+        echo "<a href='tallafocs-aislar.cgi?id=$id&accio=desconectar_admin'><button type='button'>QUITAR ACCESO ADMIN</button></a>"
+        echo "<a href='tallafocs-conndeconn.cgi?id=$id&accio=desconnectar'><button type='button'>DESCONECTAR</button></a>"
+        echo "<a href='tallafocs-aislar.cgi?id=$id&accio=aislar'><button type='button'>AISLAR</button></a>"
 		  else 
 			echo "<h2>  $nom $ip <span class='status-yellow'>$estat_vlan</span></h2>"
 	    fi

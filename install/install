@@ -176,4 +176,6 @@ EOF
     ;;
 esac
 
-##############################
+#Esto debería funcionar, es un lio de código, lo he ido haciendo mientras añadía funciones.
+#Lo he probado en un Ubuntu 24.04.3 LTS, si usas otra distro, asegurate de que haya instalado las dependencias correctamente y debería funcionar.
+#(Anotación futura, hacer un comprobador de que se halla instalado todo bien. Y quizás reacer todo el instalador, casi que será mas facil)

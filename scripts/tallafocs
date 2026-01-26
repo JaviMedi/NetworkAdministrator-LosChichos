@@ -25,8 +25,20 @@ fnc_iniciar()
 	for linia in $(grep -v '#' "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF"); do
 	    nom=$(echo "$linia"|cut -d';' -f1)
 	    ip=$(echo "$linia"|cut -d';' -f3)
+		id=$(echo "$linia" | cut -d';' -f2)
+
+		#Creando cadena de VLANS FORWARD
 	    iptables -N $nom
-	    iptables -A FORWARD -s $ip -j $nom	    
+	    iptables -A FORWARD -s $ip -j $nom
+
+		#Creando cadena de VLANs INPUT
+		iptables -N INPUT$nom
+		iptables -A INPUT -s $ip -j $nom
+
+		# Si no es vlan admin bloquea conexion al router
+		if [ "$id" != "1" ]; then
+			iptables -A INPUT$nom -s $ip -m conntrack --ctstate NEW -j DROP
+		fi 	    
 	done
 
 	# Cadena ports_wls
@@ -34,7 +46,12 @@ fnc_iniciar()
 	for linia in $(grep -v '#' "$DIR/$PROJECTO/$DIR_CONF/$PORTS_WLS"); do
 	    prot=$(echo "$linia"|cut -d';' -f1)
 	    num_port=$(echo "$linia"|cut -d';' -f2)
+		if [ "$prot" = "icmp" ]; then #si le introduces icmp en el protocolo automaticamente te permite los pings
+			iptables -A ports_wls -p icmp --icmp-type echo-request -j ACCEPT
+			iptables -A ports_wls -p icmp --icmp-type echo-reply -j ACCEPT
+		else
 		iptables -A ports_wls -p $prot --dport $num_port -j ACCEPT
+		fi
 	done
 	iptables -A ports_wls -j DROP
 
@@ -43,16 +60,13 @@ fnc_iniciar()
 	iptables -t filter -N DMZ_ISOLATION 2>/dev/null
 	iptables -t filter -F DMZ_ISOLATION
 
-	iptables -A DMZ_ISOLATION \
-  		-m conntrack --ctstate ESTABLISHED,RELATED \
-  		-j ACCEPT
-	iptables -A DMZ_ISOLATION \
-  		-i "$enp" \
-  		-m conntrack --ctstate NEW \
-  		-j ACCEPT
-	iptables -A DMZ_ISOLATION \
-  		-m conntrack --ctstate NEW \
-  		-j DROP
+
+	iptables -A DMZ_ISOLATION -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+	iptables -A DMZ_ISOLATION -i "$enp" -m conntrack --ctstate NEW -j ACCEPT
+	iptables -A DMZ_ISOLATION -m conntrack --ctstate NEW -j DROP
+
+
+
 }
 
 fnc_aturar()
@@ -114,18 +128,39 @@ fnc_configurar()
 	  	connectar)
 	        linia=$(cat "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF"| grep ";$1;" )
 	        nom=$( echo $linia | cut -d';' -f1)
+			IP_VLAN=$(echo "$linia" | cut -d';' -f3)
+			ID_VLAN=$(echo "$linia" | cut -d';' -f2)
 	        if [ -z "$nom" ]; then
 		    	echo "Error no existeix vlan $1"
-			else
+				exit 1
+			fi
 			iptables -F $nom
-		fi	        
 	  	;;
+
+		connectar_admin)
+			linia=$(cat "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF"| grep ";$1;" )
+	        nom=$( echo $linia | cut -d';' -f1)
+			IP_VLAN=$(echo "$linia" | cut -d';' -f3)
+			ID_VLAN=$(echo "$linia" | cut -d';' -f2)
+			if [ -z "$nom" ]; then
+		    	echo "Error no existeix vlan $1"
+			else
+			iptables -D INPUT -s $IP_VLAN -m conntrack --ctstate NEW -j DROP
+			fi
+		;;
+		desconectar_admin)
+			linia=$(cat "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF"| grep ";$1;" )
+	        nom=$( echo $linia | cut -d';' -f1)
+			IP_VLAN=$(echo "$linia" | cut -d';' -f3)
+			ID_VLAN=$(echo "$linia" | cut -d';' -f2)
+			iptables -A INPUT -s $IP_VLAN -m conntrack --ctstate NEW -j DROP
+		;;
 		connectar_port_wls)
 	        linia=$(cat "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF"| grep ";$1;" )
 	        nom=$( echo $linia | cut -d';' -f1)
 	        if [ -z "$nom" ]; then
 		    	echo "Error no existeix vlan $1"
-		else
+			else
 			iptables -F $nom
 			# IPs Privilegiadas
 			vid=$( echo $linia | cut -d';' -f2)
@@ -136,7 +171,8 @@ fnc_configurar()
 			
 			done
 
-			iptables -A $nom -j ports_wls
+			iptables -A $nom -j ports_wls	#La añadimos a FORWARD
+			iptables -A INPUT$nom -j ports_wls #La añadimos a INPUT
 
 		fi	        
 	  	;;
@@ -162,12 +198,14 @@ fnc_configurar()
 
     		linia=$(grep ";$VLAN_ID;" "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF")
     		nom=$(echo "$linia" | cut -d';' -f1)
+			IP_VLAN=$(echo "$linia" | cut -d';' -f3)
 
     		if [ -z "$nom" ]; then
         		echo "Error: no existeix vlan $VLAN_ID"
         		return 1
     		fi
 
+			iptables -A INPUT -s $IP_VLAN -m conntrack --ctstate NEW -j DROP
 
     		iptables -C vlan_$VLAN_ID -j DMZ_ISOLATION 2>/dev/null || \
     		iptables -A vlan_$VLAN_ID -j DMZ_ISOLATION
@@ -178,6 +216,7 @@ fnc_configurar()
 
     		linia=$(grep ";$VLAN_ID;" "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF")
     		nom=$(echo "$linia" | cut -d';' -f1)
+			IP_VLAN=$(echo "$linia" | cut -d';' -f3)
 
     		if [ -z "$nom" ]; then
         		echo "Error: no existeix vlan $VLAN_ID"
@@ -187,6 +226,8 @@ fnc_configurar()
     		if iptables -C vlan_$VLAN_ID -j DMZ_ISOLATION 2>/dev/null; then
         		iptables -D vlan_$VLAN_ID -j DMZ_ISOLATION
     		fi
+
+
     		;;
 
 	  *)
@@ -218,6 +259,7 @@ fnc_estat()
 	
 	        linia=$(cat "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF"| grep ";$1;" )
 	        nom=$( echo $linia | cut -d';' -f1)
+			ip=$( echo $linia | cut -d';' -f3)
 	        if [ -z "$nom" ]; then
 		    echo "Error no existeix vlan $1"
 		else
@@ -231,6 +273,9 @@ fnc_estat()
    				echo "CONNECTADA-PORTS-WLS"
 			elif sudo iptables -C $nom -j DMZ_ISOLATION 2>/dev/null; then
 				echo "CONNECTADA-AISLADA"
+			elif ! sudo iptables -C INPUT$nom -s "$ip" -m conntrack --ctstate NEW -j DROP 2>/dev/null; then
+				# Iptables -A INPUT$nom -s $ip -m conntrack --ctstate NEW -j DROP
+				echo "CONNECTADA-CON-ADMIN"
 			else
 			    echo "CONNECTADA"
 			fi 
