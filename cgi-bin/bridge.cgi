@@ -95,7 +95,14 @@ else # Si no hay redirect, mostramos la salida del comando, para el start, stop 
 } | stdbuf -oL nc 127.0.0.1 1234 \
   | sed -u 's/LosChichos>//g' \
   | aha
-echo "<br>"
+#echo "<br>"
+
+#{
+#  echo "bridge $comand $mode $v_b $nombre $vid $subnet $gw"
+#  echo "exit"
+#} | nc 127.0.0.1 1234 | sed 's/LosChichos>//g'
+#echo "$(/usr/local/LosChichos/system/client_srv_cli enrutar $comand) <br>"
+echo "</b>"
 fi
 
 

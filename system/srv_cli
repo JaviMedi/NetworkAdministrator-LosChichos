@@ -36,7 +36,7 @@ echo "NetworkManager desactivado."
 ## EDITAR VISUDO PARA EL SCRIPT TALLAFOCS
 USUARIO="www-data"
 SUDO_FILE="/etc/sudoers.d/${USUARIO}-iptables"
-REGLA="${USUARIO} ALL=(ALL) NOPASSWD: /usr/sbin/iptables"
+REGLA="${USUARIO} ALL=(ALL) NOPASSWD: /usr/sbin/iptables, /usr/sbin/ebtables"
 
 if ! id "$USUARIO" &>/dev/null; then
     echo "El usuario $USUARIO no existe"

@@ -33,7 +33,7 @@ fnc_iniciar()
 
 		#Creando cadena de VLANs INPUT
 		iptables -N INPUT$nom
-		iptables -A INPUT -s $ip -j $nom
+		iptables -A INPUT -s $ip -j INPUT$nom
 
 		# Si no es vlan admin bloquea conexion al router
 		if [ "$id" != "1" ]; then

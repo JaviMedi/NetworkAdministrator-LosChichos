@@ -92,6 +92,10 @@ function dmz(){
 window.top.frames['menu'].location.href='/cgi-bin/dmz-menu.cgi';
 window.top.frames['body'].location.href='/cgi-bin/dmz.cgi?comand=estat&';
 }
+function ebtables(){
+window.top.frames['menu'].location.href='/cgi-bin/ebtables-menu.cgi';
+window.top.frames['body'].location.href='/cgi-bin/ebtables.cgi?comand=estat&';
+}
 </script>
 
 <table width="100%">
@@ -99,10 +103,11 @@ window.top.frames['body'].location.href='/cgi-bin/dmz.cgi?comand=estat&';
     <td>
       <!-- Botons esquerra -->
       <button class="router-button" onclick="wan()">WAN</button>
-      <button class="router-button" onclick="enrutar()">ENRUTAR</button>  
+      <button class="router-button" onclick="enrutar()">ENRUTAR</button>
       <button class="router-button" onclick="bridge()">BRIDGE</button>   
       <button class="router-button" onclick="tallafocs()">FIREWALL</button> 
       <button class="router-button" onclick="dmz()">DMZ</button>    
+      <button class="router-button" onclick="ebtables()">EBTABLES</button>    
   </tr>
 </table>
 

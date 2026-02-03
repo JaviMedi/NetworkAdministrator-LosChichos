@@ -1,0 +1,255 @@
+#!/bin/bash
+
+source /usr/local/LosChichos/conf/variables.conf
+source "$DIR/$PROJECTO/$DIR_CONF/$FUNC"
+
+# Cargar configuracion WAN
+source "$DIR/$PROJECTO/$DIR_CONF/$CONF_IFWAN"
+WAN_IF=$enp
+
+######################################################################
+###  Funcions
+######################################################################
+
+fnc_ebtables_cmd() {
+    sudo /usr/sbin/ebtables "$@"
+}
+
+fnc_get_vlan_interfaces() {
+    local TARGET_VID=$1
+    local IFACES=""
+    
+    # Leer bridge_if.conf
+    # Formato: NOM_IF;VLAN_UNTAG;VLAN_TAG
+    while IFS=';' read -r NOM_IF VLAN_UNTAG VLAN_TAG RESTO; do
+        [[ "$NOM_IF" =~ ^#.*$ ]] && continue
+        [ -z "$NOM_IF" ] && continue
+        
+        # Check Untagged
+        if [ "$VLAN_UNTAG" == "$TARGET_VID" ]; then
+            IFACES="$IFACES $NOM_IF"
+        fi
+        
+        # Check Tagged (range or comma separated)
+        # Assuming simple comma separated or single for now based on bridge script logic
+        # bridge script: for CAMP in ${VLAN_TAG//,/ }; do ...
+        if [ "$VLAN_TAG" != "0" ]; then
+             for CAMP in ${VLAN_TAG//,/ }; do
+                # Handle ranges if present? bridge script doesn't seems to handle ranges like 1-2 explicitly in the loop 
+                # (Line 63: for CAMP in ${VLAN_TAG//,/ }; do)
+                # But bridge_if.conf showed '1-2'.
+                # Let's assume ranges might exist.
+                # If RANGE support is needed, parsing is harder.
+                # '1-2' -> 1 2.
+                if [[ "$CAMP" == *"-"* ]]; then
+                    START=${CAMP%-*}
+                    END=${CAMP#*-}
+                    if [ "$TARGET_VID" -ge "$START" ] && [ "$TARGET_VID" -le "$END" ]; then
+                         IFACES="$IFACES $NOM_IF"
+                    fi
+                else
+                    if [ "$CAMP" == "$TARGET_VID" ]; then
+                        IFACES="$IFACES $NOM_IF"
+                    fi
+                fi
+             done
+        fi
+    done < "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_IF"
+    
+    echo "$IFACES"
+}
+
+fnc_iniciar() {
+    echo "Iniciar Ebtables Isolation"
+    
+    # Flush tables
+    fnc_ebtables_cmd -F
+    fnc_ebtables_cmd -X
+    
+    # Policy defaults
+    fnc_ebtables_cmd -P FORWARD ACCEPT
+    fnc_ebtables_cmd -P INPUT ACCEPT
+    fnc_ebtables_cmd -P OUTPUT ACCEPT
+    
+    # Loop over VLANs in bridge.conf to setup chains (initially empty or restoring state)
+    # Actually, we don't store state in a file, we might rely on re-applying logic or just clear start.
+    # The 'tallafocs' approach is dynamic.
+    # Here we just init basic structure if needed.
+    
+    echo "Ebtables iniciado (Rules flushed)"
+}
+
+fnc_aturar() {
+    echo "Parar Ebtables Isolation"
+    fnc_ebtables_cmd -F
+    fnc_ebtables_cmd -X
+}
+
+fnc_aislar() {
+    ARG_1=$1
+    # Check if arg is ID or Name. Usually ID passed from CGI.
+    local VID=""
+    local NOM=""
+    
+    # Resolve ID/Name from bridge.conf
+    # bridge.conf: vlan_name;vlan_id;...
+    local LINIA=$(grep ";$ARG_1;" "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF")
+    if [ -z "$LINIA" ]; then
+        # Check if ARG_1 is the name
+        LINIA=$(grep "^$ARG_1;" "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF")
+    fi
+    
+    if [ -z "$LINIA" ]; then
+        echo "Error: VLAN $ARG_1 no encontrada"
+        return 1
+    fi
+    
+    NOM=$(echo "$LINIA" | cut -d';' -f1)
+    VID=$(echo "$LINIA" | cut -d';' -f2)
+    
+    CHAIN_NAME="ISOLATE_VLAN_$VID"
+    
+    # 1. Create Chain if not exists
+    if ! fnc_ebtables_cmd -L $CHAIN_NAME >/dev/null 2>&1; then
+        fnc_ebtables_cmd -N $CHAIN_NAME
+    else
+        fnc_ebtables_cmd -F $CHAIN_NAME
+    fi
+    
+    # 2. Configure Chain: Allow WAN, Drop others
+    fnc_ebtables_cmd -A $CHAIN_NAME -i "$WAN_IF" -j ACCEPT
+    fnc_ebtables_cmd -A $CHAIN_NAME -o "$WAN_IF" -j ACCEPT
+    fnc_ebtables_cmd -A $CHAIN_NAME -j DROP
+    
+    # 3. Add rules in FORWARD for each interface of this VLAN
+    IFACES=$(fnc_get_vlan_interfaces "$VID")
+    
+    for IFACE in $IFACES; do
+        # Check if rule exists
+        # In -i
+        fnc_ebtables_cmd -D FORWARD -i "$IFACE" -j $CHAIN_NAME 2>/dev/null
+        fnc_ebtables_cmd -A FORWARD -i "$IFACE" -j $CHAIN_NAME
+        
+        # Out -o
+        fnc_ebtables_cmd -D FORWARD -o "$IFACE" -j $CHAIN_NAME 2>/dev/null
+        fnc_ebtables_cmd -A FORWARD -o "$IFACE" -j $CHAIN_NAME
+    done
+    
+    echo "VLAN $VID ($NOM) Aislada"
+}
+
+fnc_desaislar() {
+    ARG_1=$1
+    local LINIA=$(grep ";$ARG_1;" "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF")
+    if [ -z "$LINIA" ]; then
+        LINIA=$(grep "^$ARG_1;" "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF")
+    fi
+    
+    if [ -z "$LINIA" ]; then
+         # If not found in conf, maybe attempt to clean by ID anyway if arg looks like ID?
+         if [[ "$ARG_1" =~ ^[0-9]+$ ]]; then
+             VID=$ARG_1
+         else
+             echo "Error: VLAN $ARG_1 no encontrada"
+             return 1
+         fi
+    else
+        VID=$(echo "$LINIA" | cut -d';' -f2)
+    fi
+    
+    CHAIN_NAME="ISOLATE_VLAN_$VID"
+    
+    # Remove references in FORWARD
+    # We need to know interfaces to remove specific rules OR we can flush forward? No, dangerous.
+    # We can delete by matching target.
+    # Ebtables delete by rule requires full match usually.
+    # Simpler: Get interfaces again.
+    IFACES=$(fnc_get_vlan_interfaces "$VID")
+    
+    for IFACE in $IFACES; do
+        fnc_ebtables_cmd -D FORWARD -i "$IFACE" -j $CHAIN_NAME 2>/dev/null
+        fnc_ebtables_cmd -D FORWARD -o "$IFACE" -j $CHAIN_NAME 2>/dev/null
+    done
+    
+    # Flush and Delete Chain
+    fnc_ebtables_cmd -F $CHAIN_NAME 2>/dev/null
+    fnc_ebtables_cmd -X $CHAIN_NAME 2>/dev/null
+    
+    echo "VLAN $VID Des-aislada"
+}
+
+fnc_configurar() {
+    LOC_OP=$1
+    shift
+    case "$LOC_OP" in
+        aislar)
+            fnc_aislar $1
+            ;;
+        desaislar)
+            fnc_desaislar $1
+            ;;
+        *)
+            echo "Opción desconocida: $LOC_OP"
+            ;;
+    esac
+}
+
+fnc_estat() {
+    ARG_1=$1
+    # Check status of a VLAN (Isolated or Not)
+    # If ARG_1 is provided check that VLAN.
+    
+    local VID=$ARG_1
+    CHAIN_NAME="ISOLATE_VLAN_$VID"
+    
+    if fnc_ebtables_cmd -L $CHAIN_NAME >/dev/null 2>&1; then
+        echo "AISLADA"
+    else
+        echo "NO_AISLADA"
+    fi
+}
+
+fnc_status_full() {
+    echo "=== EBTABLES STATUS ==="
+    fnc_ebtables_cmd -L --Lc
+}
+
+######################################################################
+###  MAIN
+######################################################################
+
+MSG="Usage: $0 {start|stop|restart|conf|status} [args]"
+
+if [ $# -lt 1 ]; then
+  echo "$MSG"
+  exit 1
+fi
+
+OPCIO_1=$1
+shift
+
+case "$OPCIO_1" in
+  start | iniciar)
+    fnc_iniciar $@
+    ;;
+  stop | aturar)
+    fnc_aturar $@
+    ;; 
+  conf | configurar) 
+    fnc_configurar $@
+    ;;
+  status | estat)
+     if [ -z "$1" ]; then
+        fnc_status_full
+     else
+        fnc_estat $@
+     fi
+    ;;
+  restart)
+    fnc_aturar
+    fnc_iniciar
+    ;;
+  *)
+    echo "$MSG"
+    ;;
+esac

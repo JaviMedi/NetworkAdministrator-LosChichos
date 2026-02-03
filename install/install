@@ -75,6 +75,7 @@ apt install -y expect
 apt install -y socat
 apt install -y iw
 apt install -y dbus-x11
+apt install -y aha
 
 ## Desactivar NetworkManager
 echo "Desactivando NetworkManager.."

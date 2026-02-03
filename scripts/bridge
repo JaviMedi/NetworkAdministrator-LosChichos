@@ -9,6 +9,9 @@ source $DIR/$PROJECTO/$DIR_CONF/$FUNC
 
 fnc_iniciar()
 {
+    echo "PID=$$ DATE=$(date '+%H:%M:%S.%N')" >> /tmp/bridge_runs.log
+sleep 1
+
     if fnc_enp_status "br0"; then
         echo "El servei ja està actiu"
         exit 1
@@ -32,19 +35,25 @@ fnc_iniciar()
 	
 	#Bridge part LAN
 	bridge vlan del dev br0 vid 1 pvid untagged self
+    #WAN_IF=$(ip route show default | awk '/default/ {print $5}')
+    echo "==== bridge_if.conf EN RUNTIME ===="
+nl -ba "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_IF"
+echo "=================================="
+
 	for LINIA in $(cat "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_IF" | grep -v '^#'); do
 	 	NOM_IF=$(echo "$LINIA"|cut -d';' -f1)
 	 	VLAN_UNTAG=$(echo "$LINIA"|cut -d';' -f2)
 	 	VLAN_TAG=$(echo "$LINIA"|cut -d';' -f3)
         WAN_IF=$(ip route show default | awk '/default/ {print $5}')
+        if ! ip link show dev "$NOM_IF" &>/dev/null; then #Esto comprueva que la interfaz exista por si el fichero de configuración no está actualizado
+            continue
+        fi
         case "$NOM_IF" in # Esto es para no añadir la interfaz de salida al bridge, y el propio bridge
         br0|"$WAN_IF")
             continue
             ;;
-        *)
-            ip l s dev "$NOM_IF" master br0
-            ;;
         esac
+        ip l s dev "$NOM_IF" master br0
 	 	bridge vlan del dev $NOM_IF vid 1 pvid untagged	
 	 	if [ "$VLAN_UNTAG" != "0" ]; then
 	 		bridge vlan add dev $NOM_IF vid $VLAN_UNTAG pvid untagged
