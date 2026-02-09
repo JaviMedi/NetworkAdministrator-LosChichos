@@ -30,6 +30,14 @@ h3 {
   padding: 10px;
   border-radius: 5px;
 }
+pre {
+            background: white;
+            padding: 20px;
+            border: 1px solid #ccc;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
   </style>
 </head>
 <body>
@@ -56,11 +64,11 @@ raw_untag=$(echo "$QUERY_STRING" | sed -n 's/^.*untag=\([^&]*\).*$/\1/p')
   untag=$(printf '%b' "${raw_untag//%/\\x}")
 
 
-echo "<h3>Configuración BRIDGE</h3><br><b>"
+echo "<h2>Configuración BRIDGE</h2>"
 
 
 
-echo "<br>"
+echo "<pre>"
 # Esto es para redirigir de nuevo a la página de configuración tras hacer la acción y que no se muestre la salida del comando por pantalla 
 # (solo para páginas con redirect)
 if [ -n "$redirect" ]; then
@@ -92,9 +100,7 @@ else # Si no hay redirect, mostramos la salida del comando, para el start, stop 
 {
   echo "bridge $comand $mode $v_b $nombre $vid $subnet $gw"
   echo "exit"
-} | stdbuf -oL nc 127.0.0.1 1234 \
-  | sed -u 's/LosChichos>//g' \
-  | aha
+} | stdbuf -oL nc 127.0.0.1 1234 | sed -u 's/LosChichos>//g'
 #echo "<br>"
 
 #{
@@ -102,9 +108,8 @@ else # Si no hay redirect, mostramos la salida del comando, para el start, stop 
 #  echo "exit"
 #} | nc 127.0.0.1 1234 | sed 's/LosChichos>//g'
 #echo "$(/usr/local/LosChichos/system/client_srv_cli enrutar $comand) <br>"
-echo "</b>"
 fi
-
+echo "</pre>"
 
 
 /bin/cat << EOM

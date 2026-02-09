@@ -145,7 +145,7 @@ fnc_configurar()
 			if [ -z "$nom" ]; then
 		    	echo "Error no existeix vlan $1"
 			else
-			iptables -D INPUT -s $IP_VLAN -m conntrack --ctstate NEW -j DROP
+			iptables -D INPUT$nom -s $IP_VLAN -m conntrack --ctstate NEW -j DROP
 			fi
 		;;
 		desconectar_admin)
@@ -153,7 +153,7 @@ fnc_configurar()
 	        nom=$( echo $linia | cut -d';' -f1)
 			IP_VLAN=$(echo "$linia" | cut -d';' -f3)
 			ID_VLAN=$(echo "$linia" | cut -d';' -f2)
-			iptables -A INPUT -s $IP_VLAN -m conntrack --ctstate NEW -j DROP
+			iptables -A INPUT$nom -s $IP_VLAN -m conntrack --ctstate NEW -j DROP
 		;;
 		connectar_port_wls)
 	        linia=$(cat "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF"| grep ";$1;" )

@@ -107,7 +107,7 @@ window.top.frames['body'].location.href='/cgi-bin/ebtables.cgi?comand=estat&';
       <button class="router-button" onclick="bridge()">BRIDGE</button>   
       <button class="router-button" onclick="tallafocs()">FIREWALL</button> 
       <button class="router-button" onclick="dmz()">DMZ</button>    
-      <button class="router-button" onclick="ebtables()">EBTABLES</button>    
+      <button class="router-button" onclick="ebtables()">EBTABLES</button>     
   </tr>
 </table>
 

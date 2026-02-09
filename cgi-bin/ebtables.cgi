@@ -35,9 +35,7 @@ cat /usr/local/LosChichos/cgi-bin/css.txt
 EOM
 
 if [ -n "$comand" ]; then
-    # Map command names if necessary or pass directly if script handles them
-    # ebtables script handles: start, stop, status, restart
-    # tallafocs uses: iniciar, aturar, estat
+
     
     REAL_CMD="$comand"
     case "$comand" in
