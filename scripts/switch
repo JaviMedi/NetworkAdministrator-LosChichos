@@ -1,0 +1,77 @@
+#!/bin/bash
+source /usr/local/LosChichos/conf/variables.conf
+source $DIR/$PROJECTO/$DIR_CONF/$FUNC
+
+
+
+fnc_añadir_switch() {
+    local nombre="$1"
+    local id="$2"
+    local ip="$3"
+    echo "\"$nombre\";\"$id\";\"$ip\"" >> "$DIR/$PROJECTO/$DIR_CONF/$SWITCH_CONF"
+}
+
+
+fnc_eliminar_switch() {
+    local id="$1"
+    grep -v ";\"$id\";" "$DIR/$PROJECTO/$DIR_CONF/$SWITCH_CONF" > "$DIR/$PROJECTO/$DIR_CONF/$SWITCH_CONF.tmp"
+    mv "$DIR/$PROJECTO/$DIR_CONF/$SWITCH_CONF.tmp" "$DIR/$PROJECTO/$DIR_CONF/$SWITCH_CONF"
+}
+
+fnc_estado(){
+
+    local id_busqueda="$1"
+    fichero="$DIR/$PROJECTO/$DIR_CONF/$SWITCH_CONF"
+
+    while IFS=';' read -r nombre id ip; do
+
+        # Saltar cabecera o líneas vacías
+        [[ "$nombre" =~ ^# ]] && continue
+        [[ -z "$nombre" ]] && continue
+
+        # Quitar comillas
+        nombre=$(echo "$nombre" | tr -d '"')
+        id=$(echo "$id" | tr -d '"')
+        ip=$(echo "$ip" | tr -d '"')
+
+        if [ "$id" == "$id_busqueda" ]; then
+            # Hacer ping (1 paquete, timeout 1 segundo)
+            if ping -c 1 -W 1 "$ip" > /dev/null 2>&1; then
+                echo "$ACTIVADO"
+            else
+                echo "$DESACTIVADO"
+            fi
+            exit 0 
+        fi
+
+    done < "$fichero"
+
+    echo "NO_ENCONTRADO id=$id id_busqueda=$id_busqueda"
+    exit 1
+}
+
+case "$1" in
+    "start")
+        fnc_iniciar
+        ;;
+    "añadir_switch")
+        fnc_añadir_switch "$2" "$3" "$4"
+        ;;
+    "eliminar_switch")
+        fnc_eliminar_switch "$2"
+        ;;
+    "stop")
+        fnc_aturar
+        ;;
+    "restart")
+        fnc_aturar
+        fnc_iniciar
+        ;;
+    "status")
+        fnc_estado "$2"
+        ;;
+    *)  
+        echo "Uso: $0 {start|stop|restart|status}"
+        exit 1
+        ;;
+esac

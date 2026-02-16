@@ -251,6 +251,13 @@ fnc_status(){
     else
         echo "$DESACTIVADO"
     fi
+    for i in $(ls /sys/class/net); do ## Lee interfaces de red exluyendo la loopback y la wifi
+        if [[ "$i" != "lo" && ! -d "/sys/class/net/$i/wireless" ]]; then
+            ip addr show "$i"
+            echo "-------------------------"
+        fi
+    done 
+    ip route show
 }
 
 #####################################################

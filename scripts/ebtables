@@ -15,48 +15,42 @@ fnc_ebtables_cmd() {
     sudo /usr/sbin/ebtables "$@"
 }
 
-fnc_get_vlan_interfaces() {
-    local TARGET_VID=$1
-    local IFACES=""
-    
-    # Leer bridge_if.conf
-    # Formato: NOM_IF;VLAN_UNTAG;VLAN_TAG
+
+
+fnc_manage_isolation_rules() {
+    local TARGET_VID="$1"
+    local OP="$2" # -A or -D
+    local CHAIN_NAME="$3"
+
     while IFS=';' read -r NOM_IF VLAN_UNTAG VLAN_TAG RESTO; do
         [[ "$NOM_IF" =~ ^#.*$ ]] && continue
         [ -z "$NOM_IF" ] && continue
-        
-        # Check Untagged
+
+        # Untagged
         if [ "$VLAN_UNTAG" == "$TARGET_VID" ]; then
-            IFACES="$IFACES $NOM_IF"
+             fnc_ebtables_cmd $OP FORWARD -i "$NOM_IF" -p ! 802_1Q -j "$CHAIN_NAME" 2>/dev/null
+             fnc_ebtables_cmd $OP FORWARD -o "$NOM_IF" -p ! 802_1Q -j "$CHAIN_NAME" 2>/dev/null
         fi
-        
-        # Check Tagged (range or comma separated)
-        # Assuming simple comma separated or single for now based on bridge script logic
-        # bridge script: for CAMP in ${VLAN_TAG//,/ }; do ...
+
+        # Tagged
         if [ "$VLAN_TAG" != "0" ]; then
              for CAMP in ${VLAN_TAG//,/ }; do
-                # Handle ranges if present? bridge script doesn't seems to handle ranges like 1-2 explicitly in the loop 
-                # (Line 63: for CAMP in ${VLAN_TAG//,/ }; do)
-                # But bridge_if.conf showed '1-2'.
-                # Let's assume ranges might exist.
-                # If RANGE support is needed, parsing is harder.
-                # '1-2' -> 1 2.
                 if [[ "$CAMP" == *"-"* ]]; then
                     START=${CAMP%-*}
                     END=${CAMP#*-}
                     if [ "$TARGET_VID" -ge "$START" ] && [ "$TARGET_VID" -le "$END" ]; then
-                         IFACES="$IFACES $NOM_IF"
+                         fnc_ebtables_cmd $OP FORWARD -i "$NOM_IF" -p 802_1Q --vlan-id "$TARGET_VID" -j "$CHAIN_NAME" 2>/dev/null
+                         fnc_ebtables_cmd $OP FORWARD -o "$NOM_IF" -p 802_1Q --vlan-id "$TARGET_VID" -j "$CHAIN_NAME" 2>/dev/null
                     fi
                 else
                     if [ "$CAMP" == "$TARGET_VID" ]; then
-                        IFACES="$IFACES $NOM_IF"
+                         fnc_ebtables_cmd $OP FORWARD -i "$NOM_IF" -p 802_1Q --vlan-id "$TARGET_VID" -j "$CHAIN_NAME" 2>/dev/null
+                         fnc_ebtables_cmd $OP FORWARD -o "$NOM_IF" -p 802_1Q --vlan-id "$TARGET_VID" -j "$CHAIN_NAME" 2>/dev/null
                     fi
                 fi
              done
         fi
     done < "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_IF"
-    
-    echo "$IFACES"
 }
 
 fnc_iniciar() {
@@ -122,18 +116,8 @@ fnc_aislar() {
     fnc_ebtables_cmd -A $CHAIN_NAME -j DROP
     
     # 3. Add rules in FORWARD for each interface of this VLAN
-    IFACES=$(fnc_get_vlan_interfaces "$VID")
-    
-    for IFACE in $IFACES; do
-        # Check if rule exists
-        # In -i
-        fnc_ebtables_cmd -D FORWARD -i "$IFACE" -j $CHAIN_NAME 2>/dev/null
-        fnc_ebtables_cmd -A FORWARD -i "$IFACE" -j $CHAIN_NAME
-        
-        # Out -o
-        fnc_ebtables_cmd -D FORWARD -o "$IFACE" -j $CHAIN_NAME 2>/dev/null
-        fnc_ebtables_cmd -A FORWARD -o "$IFACE" -j $CHAIN_NAME
-    done
+    # 3. Add rules in FORWARD for each interface of this VLAN
+    fnc_manage_isolation_rules "$VID" "-A" "$CHAIN_NAME"
     
     echo "VLAN $VID ($NOM) Aislada"
 }
@@ -164,12 +148,8 @@ fnc_desaislar() {
     # We can delete by matching target.
     # Ebtables delete by rule requires full match usually.
     # Simpler: Get interfaces again.
-    IFACES=$(fnc_get_vlan_interfaces "$VID")
-    
-    for IFACE in $IFACES; do
-        fnc_ebtables_cmd -D FORWARD -i "$IFACE" -j $CHAIN_NAME 2>/dev/null
-        fnc_ebtables_cmd -D FORWARD -o "$IFACE" -j $CHAIN_NAME 2>/dev/null
-    done
+    # Remove references in FORWARD
+    fnc_manage_isolation_rules "$VID" "-D" "$CHAIN_NAME"
     
     # Flush and Delete Chain
     fnc_ebtables_cmd -F $CHAIN_NAME 2>/dev/null

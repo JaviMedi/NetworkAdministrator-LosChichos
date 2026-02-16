@@ -15,3 +15,7 @@ for var in "$num1" "$num2" "$str1"; do
 done
 
 fnc_escribir_vivo "Pobando......." 0.1
+
+no access-list bind 1
+no access-list create 1
+access-list create 

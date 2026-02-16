@@ -66,7 +66,7 @@ th {
 
 
 EOM
-echo "<h1><a href='/cgi-bin/main.cgi' class="router-title" align="center" target='_top'>Administrando el Router "$HOSTNAME"</a></h1>"
+echo "<h1><a href='/cgi-bin/main.cgi' class='router-title' align='center' target='_top'>Administrando el Router "$HOSTNAME"</a></h1>"
 # echo "<h1><a href='/cgi-bin/tu_pagina.cgi' target='_top'>Administracio de $HOSTNAME</a></h1>"
 
 /bin/cat << EOM
@@ -96,6 +96,12 @@ function ebtables(){
 window.top.frames['menu'].location.href='/cgi-bin/ebtables-menu.cgi';
 window.top.frames['body'].location.href='/cgi-bin/ebtables.cgi?comand=estat&';
 }
+
+function switch2(){
+window.top.frames['menu'].location.href='/cgi-bin/switch-menu.cgi';
+window.top.frames['body'].location.href='/cgi-bin/switch-status.cgi';
+}
+
 </script>
 
 <table width="100%">
@@ -104,10 +110,11 @@ window.top.frames['body'].location.href='/cgi-bin/ebtables.cgi?comand=estat&';
       <!-- Botons esquerra -->
       <button class="router-button" onclick="wan()">WAN</button>
       <button class="router-button" onclick="enrutar()">ENRUTAR</button>
-      <button class="router-button" onclick="bridge()">BRIDGE</button>   
+      <button class="router-button" onclick="bridge()">BRIDGE</button>
+      <button class="router-button" onclick="switch2()">SWITCH</button>
       <button class="router-button" onclick="tallafocs()">FIREWALL</button> 
       <button class="router-button" onclick="dmz()">DMZ</button>    
-      <button class="router-button" onclick="ebtables()">EBTABLES</button>     
+      <button class="router-button" onclick="ebtables()">PVLAN</button>     
   </tr>
 </table>
 

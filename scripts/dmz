@@ -6,10 +6,10 @@ source /usr/local/LosChichos/conf/variables.conf
 ###  Funcions
 ######################################################################
 
-fnc_carregar_ifwan()
-{
-  source "$DIR/$PROJECTO/$DIR_CONF/$CONF_IFWAN"
-}
+#fnc_carregar_ifwan()
+#{
+#  #source "$DIR/$PROJECTO/$DIR_CONF/$CONF_IFWAN"
+#}
 
 
 fnc_iniciar()
@@ -21,8 +21,10 @@ fnc_iniciar()
         return 0
    fi
       
-  fnc_carregar_ifwan
+  #fnc_carregar_ifwan
   
+  enp=$(ip route show default | awk '/default/ {print $5}')
+
   echo "Iniciant DMZ"
 
   while IFS=';' read -r PORT_INICIAR PROTO_INICIAR IPDMZ_INICIAR; do
