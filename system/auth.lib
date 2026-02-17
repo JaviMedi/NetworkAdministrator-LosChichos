@@ -1,0 +1,103 @@
+#!/bin/bash
+
+SECURE_DIR="/usr/local/LosChichos/seguro"
+USER_DB="$SECURE_DIR/usuarios.db"
+SESSION_DIR="$SECURE_DIR/sessions"
+SESSION_TIMEOUT=3600 # 1 hora
+
+if [ ! -d "$SESSION_DIR" ]; then
+    mkdir -p "$SESSION_DIR"
+    chmod 700 "$SESSION_DIR"
+    chown root:www-data "$SESSION_DIR"
+fi
+
+function check_credentials {
+    local username="$1"
+    local password="$2"
+    
+    # Comprueba si el usuario existe
+    local entry=$(grep "^$username:" "$USER_DB")
+    if [ -z "$entry" ]; then
+        return 1
+    fi
+
+    local stored_hash=$(echo "$entry" | cut -d: -f2)
+    
+    # Calcula el hash de la contraseña proporcionada usando el salto almacenado
+    # Openssl passwd -6 genera SHA-512 crypt. 
+    # Para verificar, necesitamos el salto del hash almacenado.
+    # El formato del hash almacenado: $6$salt$hash
+    
+    # Solo verifica si tenemos un hash válido
+    if [ -z "$stored_hash" ]; then
+        return 1
+    fi
+    
+    local computed_hash=$(openssl passwd -6 -salt "$(echo "$stored_hash" | cut -d$ -f3)" "$password")
+
+    if [ "$computed_hash" == "$stored_hash" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+function create_session {
+    local username="$1"
+    # Genera un token aleatorio seguro
+    local token=$(openssl rand -hex 32)
+    local session_file="$SESSION_DIR/$token"
+    
+    echo "$username" > "$session_file"
+    # Establece el tiempo de expiración (timestamp actual + timeout)
+    echo "$(($(date +%s) + SESSION_TIMEOUT))" >> "$session_file"
+    
+    chmod 600 "$session_file"
+    chown root:www-data "$session_file"
+    
+    echo "$token"
+}
+
+function validate_session {
+    local token="$1"
+    local session_file="$SESSION_DIR/$token"
+    
+    if [ ! -f "$session_file" ]; then
+        return 1
+    fi
+    
+    local expiry=$(sed -n '2p' "$session_file")
+    local now=$(date +%s)
+    
+    if [ "$now" -gt "$expiry" ]; then
+        rm -f "$session_file"
+        return 1
+    fi
+    
+    # Extiende la sesión
+    local username=$(sed -n '1p' "$session_file")
+    echo "$username" > "$session_file"
+    echo "$(($now + SESSION_TIMEOUT))" >> "$session_file"
+    
+    return 0
+}
+
+function check_web_auth {
+    # Lee la cookie
+    local cookie_header="$HTTP_COOKIE"
+    local token=$(echo "$cookie_header" | grep -o "session_token=[^;]*" | cut -d= -f2)
+    
+    if [ -z "$token" ]; then
+        echo "Status: 302 Found"
+        echo "Location: /cgi-bin/login.cgi"
+        echo ""
+        exit 0
+    fi
+    
+    if ! validate_session "$token"; then
+        echo "Status: 302 Found"
+        echo "Location: /cgi-bin/login.cgi"
+        echo ""
+        exit 0
+    fi
+}

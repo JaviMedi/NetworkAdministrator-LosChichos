@@ -14,6 +14,34 @@ perl -e 'select STDOUT; $| = 1;'
 
 
 
+source /usr/local/LosChichos/system/auth.lib
+
+# Authentication Loop
+while true; do
+  echo -n "Username: "
+  read username
+  echo -n "Password: "
+  read password
+  
+  if [ "$username" == "SESSION_AUTH" ]; then
+      if validate_session "$password"; then
+          # Extract real username from session file
+          # We know the token is valid, so the file exists
+          SESSION_FILE="$SESSION_DIR/$password"
+          REAL_USER=$(sed -n '1p' "$SESSION_FILE")
+          echo "Login successful. Welcome $REAL_USER (via session)!"
+          break
+      else
+          echo "Login failed. Invalid session."
+      fi
+  elif check_credentials "$username" "$password"; then
+      echo "Login successful. Welcome $username!"
+      break
+  else
+      echo "Login failed. Try again."
+  fi
+done
+
 while true; do
   # Mostrar prompt i llegir entrada de l'usuari
   echo -n "LosChichos> "

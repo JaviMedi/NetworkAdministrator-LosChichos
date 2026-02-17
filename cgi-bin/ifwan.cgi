@@ -34,10 +34,7 @@ dns=$(echo "$QUERY_STRING_DECODED" | sed -n 's/.*dns=\([^&]*\).*/\1/p')
 echo "<h2>Configuración WAN</h2>"
 
 echo "<pre>"
-{
-  echo "ifwan $comand $mode $interfaz $ipmask $gtw $dns"
-  echo "exit"
-} | stdbuf -oL nc 127.0.0.1 1234 | sed -u 's/LosChichos>//g' 
+  /usr/local/LosChichos/system/nc_client "ifwan $comand $mode $interfaz $ipmask $gtw $dns" 
 
 
 

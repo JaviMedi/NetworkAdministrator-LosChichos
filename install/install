@@ -21,12 +21,82 @@ fnc_copia_ficheros()
 	cp -r "$ORIGEN" "$DESTINO_FINAL"
 
 	# Asegurar propietario root:root
-	chown -R root:root "$DESTINO_FINAL"
+	chown -R root:www-data $DESTINO_FINAL
 
 	echo "Ajustar permisos de $DESTINO_FINAL"
-	chmod -R 755 $DESTINO_FINAL
+	chmod -R 750 $DESTINO_FINAL
 }
 
+fnc_configurar_https()
+{
+
+echo "Configurando HTTPS..."
+
+DOMAIN="127.0.0.1"
+SSL_CERT="/etc/ssl/certs/loschichos-selfsigned.crt"
+SSL_KEY="/etc/ssl/private/loschichos-selfsigned.key"
+
+# Activar módulos necesarios
+a2enmod ssl
+a2enmod headers
+a2enmod rewrite
+a2enmod cgi
+
+# Generar certificado si no existe
+if [ ! -f "$SSL_CERT" ]; then
+    echo "Generando certificado SSL..."
+    openssl req -x509 -nodes -days 365 \
+        -newkey rsa:2048 \
+        -keyout "$SSL_KEY" \
+        -out "$SSL_CERT" \
+        -subj "/CN=$DOMAIN"
+fi
+
+# Configurar HTTP → HTTPS
+cat > /etc/apache2/sites-available/000-default.conf <<EOF
+<VirtualHost *:80>
+    ServerName $DOMAIN
+    Redirect permanent / https://$DOMAIN/
+</VirtualHost>
+EOF
+
+# Configurar VirtualHost HTTPS
+cat > /etc/apache2/sites-available/loschichos-ssl.conf <<EOF
+<VirtualHost *:443>
+    ServerName $DOMAIN
+
+    SSLEngine on
+    SSLCertificateFile $SSL_CERT
+    SSLCertificateKeyFile $SSL_KEY
+
+    ScriptAlias /cgi-bin/ /usr/local/LosChichos/cgi-bin/
+
+    RedirectMatch ^/$ /cgi-bin/main.cgi
+
+    <Directory "/usr/local/LosChichos/cgi-bin">
+        AllowOverride None
+        Options +ExecCGI -MultiViews +SymLinksIfOwnerMatch
+        Require all granted
+        AddHandler cgi-script .cgi
+    </Directory>
+
+    # Cabeceras de seguridad
+    Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+</VirtualHost>
+EOF
+
+a2ensite loschichos-ssl
+
+systemctl reload apache2
+
+echo "HTTPS configurado correctamente."
+} 
+
+################################################################################
+### MAIN
+################################################################################
 
 SERVICE=loschichos.socket
 SERVICE_UNIT=loschichos@.service
@@ -48,6 +118,8 @@ apt install -y curl
 apt install -y net-tools
 
 apt install -y apache2
+
+fnc_configurar_https
 
 ## mierda de cgi
 
@@ -155,6 +227,9 @@ EOF
   restart)
     systemctl restart $SERVICE
     ;;
+  installhttps)
+    fnc_configurar_https
+    ;;
 
   status)
     systemctl status $SERVICE
@@ -173,7 +248,7 @@ EOF
     ;;
 
   *)
-    echo "Uso: install {install|uninstall|start|stop|restart|status}"
+    echo "Uso: install {install|uninstall|start|stop|restart|status|installhttps}"
     ;;
 esac
 

@@ -1,5 +1,11 @@
 #!/bin/bash
 
+source /usr/local/LosChichos/conf/variables.conf
+check_web_auth
+
+echo "Content-type: text/html"
+echo ""
+
 /bin/cat << EOM
 
 <html>

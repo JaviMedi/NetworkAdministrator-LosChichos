@@ -37,7 +37,7 @@ echo "<table>"
 echo "<tr><th>Port</th><th>Protocol</th><th>ip</th><th></th></tr>"
 
 
-for iface in $(cd "$DIR"/"$PROJECTO"/"$DIR_SCRIPTS"/ && ./dmz configurar mostrar); do
+for iface in $(/usr/local/LosChichos/system/nc_client "dmz configurar mostrar"); do
 	PORT=$(echo "$iface"|cut -d';' -f1)
 	PROTO=$(echo "$iface"|cut -d';' -f2)
 	IP_DMZ=$(echo "$iface"|cut -d';' -f3)

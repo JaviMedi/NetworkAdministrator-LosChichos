@@ -14,7 +14,7 @@ VID_PARAM=$(echo "$QUERY_STRING_DECODED" | sed -n 's/.*vid=\([^&]*\).*/\1/p')
 # -------------------------------------------------------------------
 # Obtener la VLAN correspondiente
 # -------------------------------------------------------------------
-VLAN_DATA=$(cd "$DIR"/"$PROJECTO"/"$DIR_SCRIPTS"/ && ./bridge conf show vlan)
+VLAN_DATA=$(/usr/local/LosChichos/system/nc_client "bridge conf show vlan")
 LINE=$(echo "$VLAN_DATA" | grep -E ";$VID_PARAM;" || true)
 
 if [ -z "$LINE" ]; then

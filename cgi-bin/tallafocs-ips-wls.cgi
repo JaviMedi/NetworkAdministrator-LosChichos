@@ -28,10 +28,7 @@ mac=$(echo "$QUERY_STRING" | sed -n 's/^.*mac=\([^&]*\).*$/\1/p')
 
 #echo "<pre>$("$DIR"/"$PROJECTE"/"$DIR_SCRIPTS"/client_srv_cli tallafocs configurar $accio $vid $ip $mac)  </pre><br>"
 
-{
-  echo "tallafocs configurar $accio $vid $id $mac"
-  echo "exit"
-} | nc 127.0.0.1 1234 | sed 's/LosChichos>//g'
+  /usr/local/LosChichos/system/nc_client "tallafocs configurar $accio $vid $id $mac"
 
 
 /bin/cat << EOM

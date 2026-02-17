@@ -44,10 +44,7 @@ if [ -n "$comand" ]; then
         estat) REAL_CMD="status" ;;
     esac
 
-    {
-      echo "ebtables $REAL_CMD"
-      echo "exit"
-    } | nc 127.0.0.1 1234 | sed 's/LosChichos>//g'
+    /usr/local/LosChichos/system/nc_client "ebtables $REAL_CMD"
 else
     echo "Error: No se especificó comando."
 fi

@@ -33,7 +33,11 @@ fi
     echo "dmz estat"
   fi
   echo "exit"
-} | stdbuf -oL nc 127.0.0.1 1234 | sed -u 's/LosChichos>//g' | while IFS= read -r line; do
+  if [[ "$comand" != "estat" ]]; then
+    echo "dmz estat"
+  fi
+  echo "exit"
+} | /usr/local/LosChichos/system/nc_client | while IFS= read -r line; do
     printf '%s<br>\n' "$line"
     # Forzar vaciado de salida HTML
     perl -e 'select STDOUT; $|=1;'

@@ -60,21 +60,12 @@ echo "<pre>"
 if [ -n "$redirect" ]; then
 
     if [ "$comand" == "añadir_switch" ]; then
-         {
-            echo "switch $comand \"$nombre\" \"$id\" \"$ip\""
-            echo "exit"
-        } | stdbuf -oL nc 127.0.0.1 1234 >/dev/null 2>&1
+         /usr/local/LosChichos/system/nc_client "switch $comand \"$nombre\" \"$id\" \"$ip\"" >/dev/null 2>&1
     elif [ "$comand" == "eliminar_switch" ]; then
-         {
-            echo "switch $comand \"$id\""
-            echo "exit"
-        } | stdbuf -oL nc 127.0.0.1 1234 >/dev/null 2>&1
+         /usr/local/LosChichos/system/nc_client "switch $comand \"$id\"" >/dev/null 2>&1
     else
          # Fallback for other commands if any
-         {
-            echo "switch $comand"
-            echo "exit"
-        } | stdbuf -oL nc 127.0.0.1 1234 >/dev/null 2>&1
+         /usr/local/LosChichos/system/nc_client "switch $comand" >/dev/null 2>&1
     fi
     
     echo "<script>
@@ -85,10 +76,7 @@ if [ -n "$redirect" ]; then
 
 else
     # Direct command
-    {
-      echo "switch $comand"
-      echo "exit"
-    } | stdbuf -oL nc 127.0.0.1 1234 | sed -u 's/LosChichos>//g'
+    /usr/local/LosChichos/system/nc_client "switch $comand"
 fi
 
 echo "</pre>"

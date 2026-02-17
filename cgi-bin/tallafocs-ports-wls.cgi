@@ -28,10 +28,7 @@ port=$(echo "$QUERY_STRING" | sed -n 's/^.*port=\([^&]*\).*$/\1/p')
 
 #echo "<pre>$("$DIR"/"$PROJECTE"/"$DIR_SCRIPTS"/client_srv_cli tallafocs configurar $accio $protocol $port )  </pre><br>"
 echo "<pre>" 
-{
-  echo "tallafocs configurar $accio $protocol $port"
-  echo "exit"
-} | nc 127.0.0.1 1234 | sed 's/LosChichos>//g'
+  /usr/local/LosChichos/system/nc_client "tallafocs configurar $accio $protocol $port"
 echo "</pre>"
 
 /bin/cat << EOM

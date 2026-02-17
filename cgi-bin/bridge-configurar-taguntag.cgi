@@ -30,7 +30,7 @@ done
 echo "Content-type: text/html; charset=utf-8"
 echo ""
 
-VLAN_DATA=$(cd "$DIR"/"$PROJECTO"/"$DIR_SCRIPTS"/ && ./bridge conf show bridge)
+VLAN_DATA=$(/usr/local/LosChichos/system/nc_client "bridge conf show bridge")
 
 /bin/cat << EOM
 <html>

@@ -51,7 +51,8 @@ fnc_aturar()
   
   echo "Aturant DMZ"
 
-  fnc_carregar_ifwan
+  #fnc_carregar_ifwan
+  enp=$(ip route show default | awk '/default/ {print $5}')
 
   while IFS=';' read -r PORT_ATURAR PROTO_ATURAR IPDMZ_ATURAR; do
     [[ -z "$PORT_ATURAR" || "$PORT_ATURAR" =~ ^# ]] && continue
@@ -147,7 +148,8 @@ fnc_configurar()
 
 fnc_estat()
 {
-  fnc_carregar_ifwan
+  #fnc_carregar_ifwan
+  enp=$(ip route show default | awk '/default/ {print $5}')
 
   ESTAT="$DESACTIVADO"
 

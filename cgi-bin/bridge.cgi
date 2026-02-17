@@ -74,10 +74,7 @@ echo "<pre>"
 if [ -n "$redirect" ]; then
 
   if [ -n "$enp" ]; then
-     {
-        echo "bridge $comand $mode $v_b $enp $untag $tag"
-        echo "exit"
-    } | stdbuf -oL nc 127.0.0.1 1234 >/dev/null 2>&1
+     /usr/local/LosChichos/system/nc_client "bridge $comand $mode $v_b $enp $untag $tag" >/dev/null 2>&1
     echo "<script>
           setTimeout(function(){
             window.location.href='/$redirect';
@@ -85,10 +82,7 @@ if [ -n "$redirect" ]; then
           </script>"
 
   else
- {
-        echo "bridge $comand $mode $v_b $nombre $vid $subnet $gw"
-        echo "exit"
-    } | stdbuf -oL nc 127.0.0.1 1234 >/dev/null 2>&1 # Enviamos datos al servidor pero no recivimos, eliminando la salida
+    /usr/local/LosChichos/system/nc_client "bridge $comand $mode $v_b $nombre $vid $subnet $gw" >/dev/null 2>&1
     echo "<script>
           setTimeout(function(){
             window.location.href='/$redirect';
@@ -97,17 +91,7 @@ if [ -n "$redirect" ]; then
   fi
 
 else # Si no hay redirect, mostramos la salida del comando, para el start, stop y status
-{
-  echo "bridge $comand $mode $v_b $nombre $vid $subnet $gw"
-  echo "exit"
-} | stdbuf -oL nc 127.0.0.1 1234 | sed -u 's/LosChichos>//g'
-#echo "<br>"
-
-#{
-#  echo "bridge $comand $mode $v_b $nombre $vid $subnet $gw"
-#  echo "exit"
-#} | nc 127.0.0.1 1234 | sed 's/LosChichos>//g'
-#echo "$(/usr/local/LosChichos/system/client_srv_cli enrutar $comand) <br>"
+  /usr/local/LosChichos/system/nc_client "bridge $comand $mode $v_b $nombre $vid $subnet $gw"
 fi
 echo "</pre>"
 

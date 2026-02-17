@@ -79,18 +79,18 @@ for linia in $(grep -v '#' "$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF"); do
 	    id=$(echo "$linia"|cut -d';' -f2)
 	    ip=$(echo "$linia"|cut -d';' -f3)
 	    #estat_vlan=$("$DIR"/"$PROJECTE"/"$DIR_SCRIPTS"/client_srv_cli tallafocs estat $id)
-		estat_vlan=$(cd /usr/local/LosChichos/scripts/ && ./tallafocs estat $id)
-	    if [ $estat_vlan == "CONNECTADA" ]; then
+		estat_vlan=$(/usr/local/LosChichos/system/nc_client "tallafocs estat $id" | tr -d '\r' | xargs)
+	    if [[ "$estat_vlan" == "CONNECTADA" ]]; then
 		  	echo "<h2>  $nom $ip <span class='status-green'>$estat_vlan</span></h2>"
 	    	echo "<a href='tallafocs-conndeconn.cgi?id=$id&accio=desconnectar'><button type='button'>DESCONECTAR</button></a>"
         echo "<a href='tallafocs-aislar.cgi?id=$id&accio=aislar'><button type='button'>AISLAR</button></a>"
         echo "<a href='tallafocs-aislar.cgi?id=$id&accio=connectar_admin'><button type='button'>CONECTAR A ADMIN</button></a>"
         echo "<a href='tallafocs-conndeconn.cgi?id=$id&accio=connectar_port_wls'><button type='button'>APLICAR WLS PUERTOS</button></a>"
-	    elif [ $estat_vlan == "DESCONNECTADA" ]; then
+	    elif [[ "$estat_vlan" == "DESCONNECTADA" ]]; then
 			  echo "<h2>  $nom $ip <span class='status-red'>$estat_vlan</span></h2>"
 	     	echo "<a href='tallafocs-conndeconn.cgi?id=$id&accio=connectar'><button type='button'>CONNECTAR</button></a>"
 			  echo "<a href='tallafocs-conndeconn.cgi?id=$id&accio=connectar_port_wls'><button type='button'>CONNECTAR WLS PUERTOS</button></a>"
-		  elif [ $estat_vlan == "CONNECTADA-PORTS-WLS" ]; then
+		  elif [[ "$estat_vlan" == "CONNECTADA-PORTS-WLS" ]]; then
 			  echo "<h2>  $nom $ip <span class='status-yellow'>$estat_vlan</span></h2>"
 	    	echo "<a href='tallafocs-conndeconn.cgi?id=$id&accio=desconnectar'><button type='button'>DESCONECTAR</button></a>"
         echo "<a href='tallafocs-conndeconn.cgi?id=$id&accio=connectar'><button type='button'>CONNECTAR SIN RESTRICCIONES</button></a>"

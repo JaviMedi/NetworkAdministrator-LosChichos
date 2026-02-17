@@ -21,10 +21,7 @@ id=$(echo "$QUERY_STRING" | sed -n 's/^.*id=\([^&]*\).*$/\1/p')
 
 
 #echo "<pre>$("$DIR"/"$PROJECTE"/"$DIR_SCRIPTS"/client_srv_cli tallafocs configurar $accio $id) </pre><br>"
-{
-  echo "tallafocs configurar $accio $id"
-  echo "exit"
-} | nc 127.0.0.1 1234 | sed 's/LosChichos>//g'
+  /usr/local/LosChichos/system/nc_client "tallafocs configurar $accio $id"
 
 
 /bin/cat << EOM

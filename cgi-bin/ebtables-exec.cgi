@@ -75,10 +75,7 @@ if [ -n "$CMD" ]; then
     # The srv_cli expects "script_name args..."
     # So "ebtables aislar 1" -> script=ebtables, args=aislar, 1
     # We pipe "ebtables aislar 1" to nc
-    {
-        echo "$CMD"
-        echo "exit"
-    } | nc 127.0.0.1 1234 | sed 's/LosChichos>//g'
+    /usr/local/LosChichos/system/nc_client "$CMD"
 else
     echo "Error: Acción no válida o faltan parámetros."
 fi

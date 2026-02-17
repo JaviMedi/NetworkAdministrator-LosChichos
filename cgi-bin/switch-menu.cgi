@@ -1,4 +1,6 @@
 #!/bin/bash
+echo "Content-type: text/html"
+echo ""
 
 
 source /usr/local/LosChichos/conf/variables.conf

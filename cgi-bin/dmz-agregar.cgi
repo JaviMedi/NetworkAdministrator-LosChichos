@@ -26,10 +26,7 @@ IP_DMZ=$(echo "$QUERY_STRING" | sed -n 's/^.*ipdmz=\([^&]*\).*$/\1/p')
 echo "<h2>AFEGIR $PORT $PROTO $IP_DMZ</h2>" 
 echo "<pre>"
 
-{
-  echo "dmz configurar afegir $PORT $PROTO $IP_DMZ"
-  echo "exit"
-} | nc 127.0.0.1 1234 | sed 's/LosChichos>//g'
+  /usr/local/LosChichos/system/nc_client "dmz configurar afegir $PORT $PROTO $IP_DMZ"
 echo "</pre></b>"
 
 /bin/cat << EOM

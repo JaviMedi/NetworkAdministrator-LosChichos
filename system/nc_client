@@ -1,0 +1,33 @@
+#!/bin/bash
+# Wrapper para conexión autenticada por socket
+# Uso: ./nc_client "comando a ejecutar"
+
+# Parsea el token de sesión desde HTTP_COOKIE
+if [ -z "$HTTP_COOKIE" ]; then 
+    # Si no se encuentra HTTP_COOKIE, sale con error
+    echo "Error: HTTP_COOKIE not found. Run this from CGI or set HTTP_COOKIE."
+    exit 1
+fi
+
+TOKEN=$(echo "$HTTP_COOKIE" | grep -o "session_token=[^;]*" | cut -d= -f2)
+
+if [ -z "$TOKEN" ]; then
+    echo "Error: No session token found in cookie."
+    exit 1
+fi
+
+USER="SESSION_AUTH"
+PASS="$TOKEN"
+
+CMD="$@"
+
+# Envía las credenciales y el comando con pequeños retrasos para asegurar que el socket las lea correctamente
+{
+  echo "$USER"
+  sleep 0.1
+  echo "$PASS"
+  sleep 0.1
+  echo "$CMD"
+  sleep 0.1
+  echo "exit"
+} | nc 127.0.0.1 1234 | sed -u 's/LosChichos>//g' | sed -u 's/Username: //g' | sed -u 's/Password: //g' | sed -u "/Login successful/d" | sed -u "/Login failed/d"
