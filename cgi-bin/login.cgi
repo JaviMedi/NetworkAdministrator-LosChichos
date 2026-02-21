@@ -33,7 +33,7 @@ body { font-family: Arial, sans-serif; background-color: #f6f6f6; display: flex;
 .login-box { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); width: 300px; }
 h2 { text-align: center; color: #333; }
 input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-button { width: 100%; padding: 10px; background-color: #003366; color: white; border: none; border-radius: 4px; cursor: pointer; }
+button { width: 100%; padding: 10px; background-color: #003366; color: white; border: none; border-radius: 4px; cursor: pointer; margin-bottom: 10px; }
 button:hover { background-color: #002244; }
 .error { color: red; text-align: center; font-size: 0.9em; }
 </style>
@@ -47,6 +47,7 @@ button:hover { background-color: #002244; }
         <input type="password" name="password" placeholder="Contraseña" required>
         <button type="submit">Entrar</button>
     </form>
+    <button onclick="location.href='/cgi-bin/registrar.cgi'">Registrar</button>
 </div>
 </body>
 </html>

@@ -26,14 +26,14 @@ estado_firewall() {
 
 
 pintar_estado() {
-    estado="$1"
-
+#  estado="$1"
+estado="$(echo "$1" | head -n 1)"
     if [ "$estado" = "ACTIVADO" ]; then
         echo "<span class='status-green'>ACTIVADO</span>"
     elif [ "$estado" = "DESACTIVADO" ]; then
         echo "<span class='status-red'>DESACTIVADO</span>"
-#    else
-#        echo "<span class='status-yellow'>DESCONOCIDO</span>"
+    else
+        echo "<span class='status-yellow'>DESCONOCIDO</span>"
     fi
 }
 

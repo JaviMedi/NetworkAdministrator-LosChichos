@@ -3,7 +3,7 @@
 SECURE_DIR="/usr/local/LosChichos/seguro"
 USER_DB="$SECURE_DIR/usuarios.db"
 SESSION_DIR="$SECURE_DIR/sessions"
-SESSION_TIMEOUT=3600 # 1 hora
+SESSION_TIMEOUT=600 # 10 minutos
 
 if [ ! -d "$SESSION_DIR" ]; then
     mkdir -p "$SESSION_DIR"
