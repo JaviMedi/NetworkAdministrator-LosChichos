@@ -42,7 +42,25 @@ function check_credentials {
     fi
 }
 
+function cleanup_sessions {
+    local now=$(date +%s)
+    # Recorrer todos los archivos en SESSION_DIR
+    for session_file in "$SESSION_DIR"/*; do
+        # Asegurar que el archivo exista por si el directorio está vacío
+        if [ -f "$session_file" ]; then
+            local expiry=$(sed -n '2p' "$session_file")
+            # Si el archivo no tiene expiry o si el tiempo actual es mayor que el expirado
+            if [ -z "$expiry" ] || [ "$now" -gt "$expiry" ]; then
+                rm -f "$session_file"
+            fi
+        fi
+    done
+}
+
 function create_session {
+    # Limpia las sesiones expiradas en cada nuevo inicio para no acumular basura
+    cleanup_sessions
+    
     local username="$1"
     # Genera un token aleatorio seguro
     local token=$(openssl rand -hex 32)

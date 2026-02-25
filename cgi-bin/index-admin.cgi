@@ -106,6 +106,10 @@ window.top.frames['menu'].location.href='/cgi-bin/switch-menu.cgi';
 window.top.frames['body'].location.href='/cgi-bin/switch-status.cgi';
 }
 
+function salir(){
+window.top.location.href='/cgi-bin/logout.cgi';
+}
+
 </script>
 
 <table width="100%">
@@ -120,6 +124,7 @@ window.top.frames['body'].location.href='/cgi-bin/switch-status.cgi';
       <button class="router-button" onclick="tallafocs()">FIREWALL</button> 
       <button class="router-button" onclick="dmz()">DMZ</button>    
       <button class="router-button" onclick="ebtables()">PVLAN</button>     
+      <button class="router-button" onclick="salir()" style="background-color: #aa0000;">SALIR</button>
   </tr>
 </table>
 
