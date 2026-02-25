@@ -25,25 +25,25 @@ while true; do
   
   if [ "$username" == "SESSION_AUTH" ]; then
       if validate_session "$password"; then
-          # Extract real username from session file
-          # We know the token is valid, so the file exists
+          # Extraer usuario real del archivo de sesión
+          # Sabemos que el token es válido, por lo que el archivo existe
           SESSION_FILE="$SESSION_DIR/$password"
           REAL_USER=$(sed -n '1p' "$SESSION_FILE")
-          echo "Login successful. Welcome $REAL_USER (via session)!"
+          #echo "Login correcto. Bienvenido $REAL_USER (via session)!"
           break
       else
-          echo "Login failed. Invalid session."
+          echo "Login fallido. Sesión inválida."
       fi
   elif check_credentials "$username" "$password"; then
-      echo "Login successful. Welcome $username!"
+      echo "Login correcto. Bienvenido $username!"
       break
   else
-      echo "Login failed. Try again."
+      echo "Login fallido. Intente de nuevo."
   fi
 done
 
 while true; do
-  # Mostrar prompt i llegir entrada de l'usuari
+  # Mostrar prompt y leer entrada del usuario
   echo -n "LosChichos> "
   read input_line
 
@@ -58,11 +58,11 @@ case "$input_line" in
     ;;
 esac
 
-  # Separar la línia en array d'arguments
-  # Utilitzem 'read -a' per separar per espais
+  # Separar la línea en array de argumentos
+  # Utilitzamos 'read -a' para separar por espacios
   read -a args <<< "$input_line"
 
-  # Comprovar que s'ha introduït almenys un argument (nom del script)
+  # Comprobar que se ha introducido al menos un argumento (nombre del script)
   if [ ${#args[@]} -lt 1 ]; then
     continue
   fi

@@ -116,6 +116,8 @@ fnc_copia_ficheros
 apt update
 apt install -y curl
 apt install -y net-tools
+apt install -y dnsmasq
+atp install -y hostapd
 
 apt install -y apache2
 

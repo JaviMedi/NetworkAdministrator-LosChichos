@@ -8,28 +8,14 @@ echo ""
   <meta charset="utf-8">
   <title>Hola món CGI</title>
     <style>
-body {
-  font-family: Arial, sans-serif;
-  background-color: #eef3f8;
-  color: #333;
-  margin: 0;
-  padding: 0;
-}
-.header {
-  background-color: #003366;
-  color: white;
-  padding: 15px;
-  text-align: center;
-  font-size: 1.5em;
-  font-weight: bold;
-}
-h3 {
-  background: #f2f6fa;
-  border-left: 5px solid #003366;
-  margin-bottom: 10px;
-  padding: 10px;
-  border-radius: 5px;
-}
+pre {
+      background: white;
+      padding: 20px;
+      border: 1px solid #ccc;
+      box-shadow: 0 0 5px rgba(0,0,0,0.2);
+      white-space: pre-wrap;
+      font-family: monospace;
+    }
   </style>
 </head>
 <body>
@@ -38,8 +24,8 @@ EOM
 comand=$(echo "$QUERY_STRING" | sed -n 's/^.*comand=\([^&]*\).*$/\1/p')
 
 
-echo "<h3>Configuración ENRUTAMIENTO</h3><br><b>"
-
+echo "<h2>Configuración ENRUTAMIENTO</h2>"
+echo "<pre>"
 #expect /usr/local/LosChichos/scripts/exp_model
 {
   #echo "enrutar $comand"
@@ -47,7 +33,7 @@ echo "<h3>Configuración ENRUTAMIENTO</h3><br><b>"
   /usr/local/LosChichos/system/nc_client "enrutar $comand"
 }
 #echo "$(/usr/local/LosChichos/system/client_srv_cli enrutar $comand) <br>"
-echo "</b>"
+echo "</pre>"
 
 /bin/cat << EOM
 </body>

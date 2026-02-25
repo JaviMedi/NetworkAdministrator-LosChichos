@@ -27,10 +27,10 @@ pre {
 <pre>
                                     ______________________________________             
                                   /                                        \
-        .--'''''''''--.          /   ¡YEE Ninot! Que te crees, listo?       \
-     .'      .---.      '.      /\ Que te voy a dejar que te registres y au? |
-    /    .-----------.    \    /  \  Anda, habla con el Administrador        |      
-   /        .-----.        \  /    \    y que te haga una cuenta.           /       
+        .--'''''''''--.          /     ¡YEE Ninot! Que te crees, listo?     \
+     .'      .---.      '.      /\   Que voy a dejar que te registres y au?  |
+    /    .-----------.    \    /  \   Anda, habla con el Administrador       |      
+   /        .-----.        \  /    \     y que te haga una cuenta.          /       
    |       .-.   .-.       | /      \_____________________________________/  
     \    | .-. | .-. |    / /       
      '-._| | | | | | |_.-'         

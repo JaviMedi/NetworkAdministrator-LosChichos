@@ -76,6 +76,10 @@ function wan(){
 window.top.frames['menu'].location.href='/cgi-bin/menu-ifwan.cgi';
 window.top.frames['body'].location.href='/cgi-bin/ifwan.cgi';
 }
+function wifi(){
+window.top.frames['menu'].location.href='/cgi-bin/wifi-menu.cgi';
+window.top.frames['body'].location.href='/cgi-bin/wifi.cgi?comand=estat&';
+}
 function enrutar(){
 window.top.frames['menu'].location.href='/cgi-bin/menu-enrutar.cgi';
 window.top.frames['body'].location.href='/cgi-bin/enrutar.cgi';
@@ -109,6 +113,7 @@ window.top.frames['body'].location.href='/cgi-bin/switch-status.cgi';
     <td>
       <!-- Botons esquerra -->
       <button class="router-button" onclick="wan()">WAN</button>
+      <button class="router-button" onclick="wifi()">WIFI</button>
       <button class="router-button" onclick="enrutar()">ENRUTAR</button>
       <button class="router-button" onclick="bridge()">BRIDGE</button>
       <button class="router-button" onclick="switch2()">SWITCH</button>

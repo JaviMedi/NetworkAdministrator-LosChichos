@@ -15,33 +15,30 @@ echo ""
 EOM
 cat $DIR/$PROJECTE/$DIR_CGI/$CSS_CGI_BIN
 /bin/cat << EOM
+  <style>
+    pre {
+      background: white;
+      padding: 20px;
+      border: 1px solid #ccc;
+      box-shadow: 0 0 5px rgba(0,0,0,0.2);
+      white-space: pre-wrap;
+      font-family: monospace;
+    }
+  </style>
 </head>
 <body>
 EOM
 
 comand=$(echo "$QUERY_STRING" | sed -n 's/^.*comand=\([^&]*\).*$/\1/p')
 
-echo "<h2>$comand</h2>" 
-echo "<pre>$("$DIR"/"$PROJECTE"/"$DIR_SCRIPTS"/client_srv_cli dmz $comand) </pre><br>"
-if [[ "$comand" != "estat" ]] then
-	echo "<pre>$("$DIR"/"$PROJECTE"/"$DIR_SCRIPTS"/client_srv_cli dmz estat) </pre><br>"
+echo "<h2>Configuración DMZ</h2>"
+echo "<pre>"
+/usr/local/LosChichos/system/nc_client "dmz $comand" 2>&1
+if [[ "$comand" != "estat" ]]; then
+	echo ""
+	/usr/local/LosChichos/system/nc_client "dmz estat" 2>&1
 fi
-
-{
-  echo "dmz $comand"
-  if [[ "$comand" != "estat" ]] then
-    echo "dmz estat"
-  fi
-  echo "exit"
-  if [[ "$comand" != "estat" ]]; then
-    echo "dmz estat"
-  fi
-  echo "exit"
-} | /usr/local/LosChichos/system/nc_client | while IFS= read -r line; do
-    printf '%s<br>\n' "$line"
-    # Forzar vaciado de salida HTML
-    perl -e 'select STDOUT; $|=1;'
-done 
+echo "</pre>"
 
 
 /bin/cat << EOM
