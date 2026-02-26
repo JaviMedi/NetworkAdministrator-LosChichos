@@ -46,6 +46,26 @@ fnc_iniciar() {
 			ip l s dev $interface up
 			ip a a $wifi_ip dev $interface
 
+			# Activar forwarding
+			sysctl -w net.ipv4.ip_forward=1
+
+			# Crear config dnsmasq
+			cat <<EOF > /etc/dnsmasq.d/ap.conf
+			interface=$interface
+			bind-interfaces
+			dhcp-range=$wifi_ip_inicial,$wifi_ip_final,12h
+			dhcp-option=3,$wifi_gateway
+			dhcp-option=6,$wifi_ip_dns1
+
+			# Evitar usar resolv.conf del sistema
+			no-resolv
+			server=8.8.8.8
+			server=1.1.1.1	
+EOF
+
+			# Reiniciar dnsmasq
+			systemctl restart dnsmasq
+
 			fnc_estat
 			
 		)
