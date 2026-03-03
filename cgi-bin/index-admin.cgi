@@ -102,8 +102,8 @@ window.top.frames['body'].location.href='/cgi-bin/ebtables.cgi?comand=estat&';
 }
 
 function switch2(){
-window.top.frames['menu'].location.href='/cgi-bin/switch-menu.cgi';
-window.top.frames['body'].location.href='/cgi-bin/switch-status.cgi';
+window.top.frames['menu'].location.href='/cgi-bin/switchs-menu.cgi';
+window.top.frames['body'].location.href='/cgi-bin/switchs-estat.cgi';
 }
 
 function salir(){

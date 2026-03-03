@@ -13,6 +13,20 @@
 }
 .Estilo1 {color: #FF00FF}
 .Estilo2 {color: #000000}
+.status-green {
+  color: green;
+  font-weight: bold;
+}
+
+.status-red {
+  color: red;
+  font-weight: bold;
+}
+
+.status-yellow {
+  color: yellow;
+  font-weight: bold;
+}
 -->
 h2 {
   background-color: #003366;
