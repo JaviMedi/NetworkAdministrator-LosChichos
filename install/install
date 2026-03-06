@@ -4,64 +4,124 @@
 ## Script de Instalación ##
 ###########################
 
-source /usr/local/LosChichos/conf/variables.conf
+ORIGEN="../"
+DESTINO="/usr/local"
+NOMBRE_CARPETA="LosChichos"
+DESTINO_FINAL="$DESTINO/$NOMBRE_CARPETA"
+DIR_SYSTEM="system"
+SERVICE="loschichos.socket"
+SERVICE_UNIT="loschichos@.service"
+IP_ADDR="127.0.0.1"
+PORT="1234"
 
 
-
-fnc_copia_ficheros()
-{
-	ORIGEN="../"
-	DESTINO="/usr/local"
-	NOMBRE_CARPETA=LosChichos
-	DESTINO_FINAL="$DESTINO/$NOMBRE_CARPETA"
-
-	echo "Copiando ficheros a $DESTINO_FINAL..."
-
-	# Copiar carpeta
-	cp -r "$ORIGEN" "$DESTINO_FINAL"
-
-	# Asegurar propietario root:root
-	chown -R root:www-data $DESTINO_FINAL
-
-	echo "Ajustar permisos de $DESTINO_FINAL"
-	chmod -R 750 $DESTINO_FINAL
-}
-
-fnc_configurar_https()
-{
-
-echo "Configurando HTTPS..."
-
-DOMAIN="127.0.0.1"
-SSL_CERT="/etc/ssl/certs/loschichos-selfsigned.crt"
-SSL_KEY="/etc/ssl/private/loschichos-selfsigned.key"
-
-# Activar módulos necesarios
-a2enmod ssl
-a2enmod headers
-a2enmod rewrite
-a2enmod cgi
-
-# Generar certificado si no existe
-if [ ! -f "$SSL_CERT" ]; then
-    echo "Generando certificado SSL..."
-    openssl req -x509 -nodes -days 365 \
-        -newkey rsa:2048 \
-        -keyout "$SSL_KEY" \
-        -out "$SSL_CERT" \
-        -subj "/CN=$DOMAIN"
+if [[ "$EUID" -ne 0 ]]; then
+	echo "Yeeeee, ejecuta esto como root anda..." >&2
+	exit 1
 fi
 
-# Configurar HTTP → HTTPS
-cat > /etc/apache2/sites-available/000-default.conf <<EOF
+fnc_ajustar_permisos() {
+    echo "1. Ajustando permisos en $DESTINO_FINAL..."
+    
+    # Check if directory exists before applying permissions
+    if [ ! -d "$DESTINO_FINAL" ]; then
+        echo "Error: El directorio $DESTINO_FINAL no existe. Ejecuta el modo 2 (Copiar Ficheros) primero."
+        return 1
+    fi
+    
+    # Permisos generales
+    # El usuario dijo que la raíz es javi:javi excepto seguro
+    chown -R root:root "$DESTINO_FINAL" # Como no conocemos el usuario en otras máquinas, pondremos root:root como estándar en la ruta de instalación, o www-data. Para mantener coherencia con el script original, lo normal para /usr/local es root:root
+    find "$DESTINO_FINAL" -type d -exec chmod 755 {} \;
+    find "$DESTINO_FINAL" -type f -exec chmod 644 {} \;
+    
+    # Permisos de ejecución para scripts y cgi
+    chmod +x "$DESTINO_FINAL/cgi-bin/"*
+    chmod +x "$DESTINO_FINAL/scripts/"*
+    chmod +x "$DESTINO_FINAL/install/install"
+    chmod +x "$DESTINO_FINAL/system/"*
+    
+    # Carpeta seguro: root:www-data y permisos restringidos
+    if [ -d "$DESTINO_FINAL/seguro" ]; then
+        chown -R root:www-data "$DESTINO_FINAL/seguro"
+        chmod -R 750 "$DESTINO_FINAL/seguro"
+    fi
+
+    echo "Configurando sudoers..."
+    ## EDITAR VISUDO PARA EL SCRIPT TALLAFOCS
+    USUARIO="www-data"
+    SUDO_FILE="/etc/sudoers.d/${USUARIO}-iptables"
+    REGLA="${USUARIO} ALL=(ALL) NOPASSWD: /usr/sbin/iptables"
+
+    if ! id "$USUARIO" &>/dev/null; then
+        echo "Advertencia: El usuario $USUARIO no existe"
+    else
+        echo "$REGLA" > "$SUDO_FILE"
+        chmod 440 "$SUDO_FILE"
+
+        if visudo -cf "$SUDO_FILE" >/dev/null 2>&1; then
+            echo "$USUARIO puede usar iptables sin contraseña"
+        else
+            echo "ERROR en sintaxis sudoers, no se aplica"
+            rm -f "$SUDO_FILE"
+        fi
+    fi
+
+    echo "Permisos ajustados correctamente."
+}
+
+fnc_copia_ficheros() {
+    echo "2. Copiando ficheros a $DESTINO_FINAL..."
+
+    if [ ! -d "$DESTINO_FINAL" ]; then
+        mkdir -p "$DESTINO_FINAL"
+    fi
+
+    cp -r "$ORIGEN"* "$DESTINO_FINAL"/
+    
+    echo "Copia completada."
+}
+
+fnc_instalar_dependencias() {
+    echo "3. Instalando dependencias..."
+    
+    apt-get update
+    apt-get install -y curl net-tools dnsmasq hostapd apache2 expect socat iw dbus-x11 aha
+    
+    echo "Dependencias instaladas."
+}
+
+
+fnc_configurar_https() {
+    echo "Configurando HTTPS..."
+
+    DOMAIN="127.0.0.1"
+    SSL_CERT="/etc/ssl/certs/loschichos-selfsigned.crt"
+    SSL_KEY="/etc/ssl/private/loschichos-selfsigned.key"
+
+    # Activar módulos necesarios
+    a2enmod ssl headers rewrite cgi
+
+    # Generar certificado si no existe
+    if [ ! -f "$SSL_CERT" ]; then
+        echo "Generando certificado SSL..."
+        openssl req -x509 -nodes -days 365 \
+            -newkey rsa:2048 \
+            -keyout "$SSL_KEY" \
+            -out "$SSL_CERT" \
+            -subj "/CN=$DOMAIN"
+    fi
+
+    # Configurar HTTP → HTTPS
+    cat > /etc/apache2/sites-available/000-default.conf <<EOF
 <VirtualHost *:80>
     ServerName $DOMAIN
     Redirect permanent / https://$DOMAIN/
 </VirtualHost>
 EOF
 
-# Configurar VirtualHost HTTPS
-cat > /etc/apache2/sites-available/loschichos-ssl.conf <<EOF
+    # Configurar VirtualHost HTTPS
+    cat > /etc/apache2/sites-available/loschichos-ssl.conf <<EOF
 <VirtualHost *:443>
     ServerName $DOMAIN
 
@@ -87,46 +147,25 @@ cat > /etc/apache2/sites-available/loschichos-ssl.conf <<EOF
 </VirtualHost>
 EOF
 
-a2ensite loschichos-ssl
+    a2ensite loschichos-ssl
+    systemctl reload apache2
 
-systemctl reload apache2
-
-echo "HTTPS configurado correctamente."
+    echo "HTTPS configurado correctamente."
 } 
 
-################################################################################
-### MAIN
-################################################################################
 
-SERVICE=loschichos.socket
-SERVICE_UNIT=loschichos@.service
-IP_ADDR="127.0.0.1"
-PORT="1234"
+fnc_instalacion_completa() {
+    echo "4. Instalación completa..."
+    
+    fnc_instalar_dependencias
+    fnc_copia_ficheros
+    fnc_ajustar_permisos
+    
+    fnc_configurar_https
 
-
-if [[ "$EUID" -ne 0 ]]; then
-	echo "Yeeeee, ejecuta esto como root anda..." >&2
-	exit 1
-fi
-
-
-case "$1" in
-  install | -y)
-fnc_copia_ficheros
-apt update
-apt install -y curl
-apt install -y net-tools
-apt install -y dnsmasq
-atp install -y hostapd
-
-apt install -y apache2
-
-fnc_configurar_https
-
-## mierda de cgi
-
-a2enmod cgi
-cat > /etc/apache2/conf-available/loschichos-cgi.conf <<'EOF'
+    ## Configuración de CGI
+    echo "Configurando CGI..."
+    cat > /etc/apache2/conf-available/loschichos-cgi.conf <<'EOF'
 ScriptAlias /cgi-bin/ /usr/local/LosChichos/cgi-bin/
 
 <Directory "/usr/local/LosChichos/cgi-bin">
@@ -137,52 +176,19 @@ ScriptAlias /cgi-bin/ /usr/local/LosChichos/cgi-bin/
 </Directory>
 EOF
 
-a2enconf loschichos-cgi
-systemctl restart apache2
+    a2enconf loschichos-cgi
+    
+    # Desactivar deflate para CGI streams instántaneos (evitar buffering)
+    a2dismod -f deflate
+    systemctl restart apache2
 
-## Esto debería funcionar, no se... 
+    ## Desactivar NetworkManager
+    echo "Desactivando NetworkManager..."
+    systemctl stop NetworkManager
+    systemctl disable NetworkManager
+    echo "NetworkManager desactivado."
 
-a2dismod -f deflate
-systemctl restart apache2
-
-apt install -y expect
-apt install -y socat
-apt install -y iw
-apt install -y dbus-x11
-apt install -y aha
-
-## Desactivar NetworkManager
-echo "Desactivando NetworkManager.."
-
-systemctl stop NetworkManager
-systemctl disable NetworkManager
-echo
-
-echo "NetworkManager desactivado."
-
-## EDITAR VISUDO PARA EL SCRIPT TALLAFOCS
-USUARIO="www-data"
-SUDO_FILE="/etc/sudoers.d/${USUARIO}-iptables"
-REGLA="${USUARIO} ALL=(ALL) NOPASSWD: /usr/sbin/iptables"
-
-if ! id "$USUARIO" &>/dev/null; then
-    echo "El usuario $USUARIO no existe"
-    exit 1
-fi
-
-echo "$REGLA" > "$SUDO_FILE"
-
-chmod 440 "$SUDO_FILE"
-
-if visudo -cf "$SUDO_FILE"; then
-    echo "Regla sudoers válida"
-    echo "$USUARIO puede usar iptables sin contraseña"
-else
-    echo "ERROR en sintaxis sudoers, no se aplica"
-    rm -f "$SUDO_FILE"
-    exit 1
-fi
-
+    ## Instalando el servicio socket
     echo "Instalando servicio LosChichos..."
 
     cat > /etc/systemd/system/loschichos.socket <<EOF
@@ -203,7 +209,7 @@ EOF
 Description=LosChichos session
 
 [Service]
-ExecStart=${DIR}/${PROJECTO}/${DIR_SYSTEM}/scr_cli
+ExecStart=${DESTINO_FINAL}/${DIR_SYSTEM}/scr_cli
 StandardInput=socket
 StandardOutput=socket
 StandardError=socket
@@ -216,44 +222,62 @@ EOF
     systemctl enable --now loschichos.socket
 
     echo "Servicio instalado y escuchando en $IP_ADDR:$PORT"
-    ;;
+    echo "Instalación completa terminada."
+}
 
+
+################################################################################
+### MAIN
+################################################################################
+
+
+case "$1" in
+  permisos | 1)
+    fnc_ajustar_permisos
+    ;;
+  copiar | 2)
+    fnc_copia_ficheros
+    ;;
+  dependencias | 3)
+    fnc_instalar_dependencias
+    ;;
+  completa | 4 | install | -y)
+    fnc_instalacion_completa
+    ;;
   start)
     systemctl start $SERVICE
     ;;
-
   stop)
     systemctl stop $SERVICE
     ;;
-
   restart)
     systemctl restart $SERVICE
     ;;
   installhttps)
     fnc_configurar_https
     ;;
-
   status)
     systemctl status $SERVICE
     ;;
   uninstall)
     echo "Desinstalando servicio LosChichos..."
-
     systemctl disable --now $SERVICE
     rm -f /etc/systemd/system/loschichos.socket
     rm -f /etc/systemd/system/loschichos@.service
-
     systemctl daemon-reexec
     systemctl daemon-reload
-
     echo "Servicio desinstalado."
     ;;
-
   *)
-    echo "Uso: install {install|uninstall|start|stop|restart|status|installhttps}"
+    echo "Uso: install {1(permisos) | 2(copiar) | 3(dependencias) | 4(completa) | start | stop | restart | status | uninstall}"
+    echo " - 1 o permisos: Ajustar permisos"
+    echo " - 2 o copiar: Copiar ficheros a /usr/local/LosChichos"
+    echo " - 3 o dependencias: Instalar dependencias del sistema"
+    echo " - 4 o completa: Ejecutar instalación completa"
+    echo " - start: Iniciar servicio"
+    echo " - stop: Detener servicio"
+    echo " - restart: Reiniciar servicio"
+    echo " - status: Estado del servicio"
+    echo " - uninstall: Desinstalar servicio"
     ;;
 esac
-
-#Esto debería funcionar, es un lio de código, lo he ido haciendo mientras añadía funciones.
-#Lo he probado en un Ubuntu 24.04.3 LTS, si usas otra distro, asegurate de que haya instalado las dependencias correctamente y debería funcionar.
-#(Anotación futura, hacer un comprobador de que se halla instalado todo bien. Y quizás reacer todo el instalador, casi que será mas facil)
