@@ -80,6 +80,14 @@ function wifi(){
 window.top.frames['menu'].location.href='/cgi-bin/wifi-menu.cgi';
 window.top.frames['body'].location.href='/cgi-bin/wifi.cgi?comand=estat&';
 }
+function dhcp(){
+window.top.frames['menu'].location.href='/cgi-bin/dhcp-menu.cgi';
+window.top.frames['body'].location.href='/cgi-bin/dhcp.cgi?comand=estat&';
+}
+function vpn_wg(){
+window.top.frames['menu'].location.href='/cgi-bin/vpn_wg-menu.cgi';
+window.top.frames['body'].location.href='/cgi-bin/vpn_wg.cgi?comand=estat&';
+}
 function enrutar(){
 window.top.frames['menu'].location.href='/cgi-bin/menu-enrutar.cgi';
 window.top.frames['body'].location.href='/cgi-bin/enrutar.cgi';
@@ -118,6 +126,8 @@ window.top.location.href='/cgi-bin/logout.cgi';
       <!-- Botons esquerra -->
       <button class="router-button" onclick="wan()">WAN</button>
       <button class="router-button" onclick="wifi()">WIFI</button>
+      <button class="router-button" onclick="vpn_wg()">VPN</button> 
+      <button class="router-button" onclick="dhcp()">DHCP</button>
       <button class="router-button" onclick="enrutar()">ENRUTAR</button>
       <button class="router-button" onclick="bridge()">BRIDGE</button>
       <button class="router-button" onclick="switch2()">SWITCH</button>

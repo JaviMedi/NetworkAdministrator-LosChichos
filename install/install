@@ -29,9 +29,8 @@ fnc_ajustar_permisos() {
         return 1
     fi
     
-    # Permisos generales
-    # El usuario dijo que la raíz es javi:javi excepto seguro
-    chown -R root:root "$DESTINO_FINAL" # Como no conocemos el usuario en otras máquinas, pondremos root:root como estándar en la ruta de instalación, o www-data. Para mantener coherencia con el script original, lo normal para /usr/local es root:root
+    # Permisos generales: root:root en todo
+    chown -R root:root "$DESTINO_FINAL"
     find "$DESTINO_FINAL" -type d -exec chmod 755 {} \;
     find "$DESTINO_FINAL" -type f -exec chmod 644 {} \;
     
@@ -41,10 +40,20 @@ fnc_ajustar_permisos() {
     chmod +x "$DESTINO_FINAL/install/install"
     chmod +x "$DESTINO_FINAL/system/"*
     
-    # Carpeta seguro: root:www-data y permisos restringidos
+    # Carpeta seguro: root:www-data con permisos restringidos
+    # www-data necesita poder leer usuarios.db y escribir/leer en sessions/
     if [ -d "$DESTINO_FINAL/seguro" ]; then
         chown -R root:www-data "$DESTINO_FINAL/seguro"
-        chmod -R 750 "$DESTINO_FINAL/seguro"
+        # El directorio seguro: root puede todo, www-data puede listar y entrar (r-x)
+        chmod 750 "$DESTINO_FINAL/seguro"
+        # usuarios.db: solo root escribe, www-data puede leer (para autenticar logins)
+        if [ -f "$DESTINO_FINAL/seguro/usuarios.db" ]; then
+            chmod 640 "$DESTINO_FINAL/seguro/usuarios.db"
+        fi
+        # sessions/: www-data debe poder crear/leer/borrar sus propios ficheros de sesión
+        if [ -d "$DESTINO_FINAL/seguro/sessions" ]; then
+            chmod 770 "$DESTINO_FINAL/seguro/sessions"
+        fi
     fi
 
     echo "Configurando sudoers..."
@@ -70,6 +79,62 @@ fnc_ajustar_permisos() {
     echo "Permisos ajustados correctamente."
 }
 
+fnc_crear_usuario() {
+    echo "Crear usuario administrador para el login web..."
+
+    SECURE_DIR="$DESTINO_FINAL/seguro"
+    USER_DB="$SECURE_DIR/usuarios.db"
+    SESSION_DIR="$SECURE_DIR/sessions"
+
+    # Crear estructura de seguro si no existe
+    if [ ! -d "$SECURE_DIR" ]; then
+        mkdir -p "$SECURE_DIR"
+        chown root:www-data "$SECURE_DIR"
+        chmod 750 "$SECURE_DIR"
+    fi
+
+    if [ ! -d "$SESSION_DIR" ]; then
+        mkdir -p "$SESSION_DIR"
+        chown root:www-data "$SESSION_DIR"
+        chmod 770 "$SESSION_DIR"
+    fi
+
+    # Solicitar nombre de usuario
+    read -rp "Nombre de usuario: " NEW_USER
+    if [ -z "$NEW_USER" ]; then
+        echo "Error: el nombre de usuario no puede estar vacío."
+        return 1
+    fi
+
+    # Solicitar contraseña (sin eco)
+    read -rsp "Contraseña: " NEW_PASS
+    echo
+    if [ -z "$NEW_PASS" ]; then
+        echo "Error: la contraseña no puede estar vacía."
+        return 1
+    fi
+
+    # Generar hash SHA-512 con salt aleatorio
+    HASH=$(openssl passwd -6 "$NEW_PASS")
+
+    # Agregar usuario al db (o crearlo si no existe)
+    if [ ! -f "$USER_DB" ]; then
+        touch "$USER_DB"
+        chown root:www-data "$USER_DB"
+        chmod 640 "$USER_DB"
+    fi
+
+    # Comprueba si el usuario ya existe
+    if grep -q "^${NEW_USER}:" "$USER_DB"; then
+        # Actualiza el hash existente
+        sed -i "s|^${NEW_USER}:.*|${NEW_USER}:${HASH}|" "$USER_DB"
+        echo "Usuario '$NEW_USER' actualizado correctamente."
+    else
+        echo "${NEW_USER}:${HASH}" >> "$USER_DB"
+        echo "Usuario '$NEW_USER' creado correctamente."
+    fi
+}
+
 fnc_copia_ficheros() {
     echo "2. Copiando ficheros a $DESTINO_FINAL..."
 
@@ -86,7 +151,7 @@ fnc_instalar_dependencias() {
     echo "3. Instalando dependencias..."
     
     apt-get update
-    apt-get install -y curl net-tools dnsmasq hostapd apache2 expect socat iw dbus-x11 aha
+    apt-get install -y curl net-tools dnsmasq hostapd apache2 expect socat iw dbus-x11 aha wireguard
     
     echo "Dependencias instaladas."
 }
@@ -222,6 +287,14 @@ EOF
     systemctl enable --now loschichos.socket
 
     echo "Servicio instalado y escuchando en $IP_ADDR:$PORT"
+
+    ## Crear usuario administrador
+    echo ""
+    echo "=================================================================="
+    echo "PASO FINAL: Crear usuario administrador para el login web"
+    echo "=================================================================="
+    fnc_crear_usuario
+
     echo "Instalación completa terminada."
 }
 
@@ -243,6 +316,9 @@ case "$1" in
     ;;
   completa | 4 | install | -y)
     fnc_instalacion_completa
+    ;;
+  adduser | usuario)
+    fnc_crear_usuario
     ;;
   start)
     systemctl start $SERVICE
@@ -269,11 +345,12 @@ case "$1" in
     echo "Servicio desinstalado."
     ;;
   *)
-    echo "Uso: install {1(permisos) | 2(copiar) | 3(dependencias) | 4(completa) | start | stop | restart | status | uninstall}"
+    echo "Uso: install {1(permisos) | 2(copiar) | 3(dependencias) | 4(completa) | adduser | start | stop | restart | status | uninstall}"
     echo " - 1 o permisos: Ajustar permisos"
     echo " - 2 o copiar: Copiar ficheros a /usr/local/LosChichos"
     echo " - 3 o dependencias: Instalar dependencias del sistema"
     echo " - 4 o completa: Ejecutar instalación completa"
+    echo " - adduser: Crear o actualizar usuario administrador web"
     echo " - start: Iniciar servicio"
     echo " - stop: Detener servicio"
     echo " - restart: Reiniciar servicio"

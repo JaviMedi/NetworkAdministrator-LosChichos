@@ -6,10 +6,19 @@ source "$DIR/$PROJECTO/$DIR_CONF/$CONF_IFWAN"
 ######################################################################
 ###  Funcions
 ######################################################################
+
+fnc_vlan_nom_id(){
+	local vid="$1"
+	local file="$DIR/$PROJECTO/$DIR_CONF/$BRIDGE_CONF"
+
+	awk -F';' -v id="$vid" '$2 == id { print $1; exit }' "$file"
+}
+
 fnc_estado_aislar()
 {
 VLAN_ID="$2"
-if iptables -C vlan_$VLAN_ID -j DMZ_ISOLATION 2>/dev/null; then
+VLAN_NOM=$(fnc_vlan_nom_id $VLAN_ID)
+if iptables -C $VLAN_NOM -j DMZ_ISOLATION 2>/dev/null; then
     echo "$ACTIVADO"
 else
     echo "$DESACTIVADO"
@@ -207,8 +216,8 @@ fnc_configurar()
 
 			iptables -A INPUT -s $IP_VLAN -m conntrack --ctstate NEW -j DROP
 
-    		iptables -C vlan_$VLAN_ID -j DMZ_ISOLATION 2>/dev/null || \
-    		iptables -A vlan_$VLAN_ID -j DMZ_ISOLATION
+    		iptables -C $nom -j DMZ_ISOLATION 2>/dev/null || \
+    		iptables -A $nom -j DMZ_ISOLATION
 			;;
 		desaislar)
 
@@ -223,8 +232,8 @@ fnc_configurar()
         		return 1
     		fi
 
-    		if iptables -C vlan_$VLAN_ID -j DMZ_ISOLATION 2>/dev/null; then
-        		iptables -D vlan_$VLAN_ID -j DMZ_ISOLATION
+    		if iptables -C $nom -j DMZ_ISOLATION 2>/dev/null; then
+        		iptables -D $nom -j DMZ_ISOLATION
     		fi
 
 
