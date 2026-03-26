@@ -55,9 +55,9 @@ h4 a:hover {
 </style>
 </head>
 <body>
-<h4><a href="/cgi-bin/enrutar.cgi?comand=start&" target="body">Enrutar Start</a></h4>
-<h4><a href="/cgi-bin/enrutar.cgi?comand=stop&" target="body">Enrutar Stop</a></h4>
-<h4><a href="/cgi-bin/enrutar.cgi?comand=status&" target="body">Enrutar Status</a></h4>
+<h4><a href="/cgi-bin/enrutar-start.cgi?" target="body">Enrutar Start</a></h4>
+<h4><a href="/cgi-bin/enrutar-stop.cgi?" target="body">Enrutar Stop</a></h4>
+<h4><a href="/cgi-bin/enrutar.cgi?comand=statusCOMPLETO&" target="body">Enrutar Status</a></h4>
 </body>
 </html>
 

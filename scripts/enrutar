@@ -23,10 +23,38 @@ fnc_enr_start(){
     echo "$ACTIVADO"
 }
 
+fnc_enr_start_nat(){
+    if iptables -t nat -C POSTROUTING -o "$enp" -j MASQUERADE 2> /dev/null; then
+        echo "La NAT ya está activada"
+        exit 1
+    fi
+    iptables -t nat -A POSTROUTING -o $enp -j MASQUERADE
+    echo "$ACTIVADO"
+}
+
+fnc_enr_start_enr(){
+    if [ $(cat /proc/sys/net/ipv4/ip_forward) -eq 1 ]; then
+        echo "El enrutamiento ya está activado"
+        exit 1
+    fi
+    echo 1 > /proc/sys/net/ipv4/ip_forward
+    echo "$ACTIVADO"
+}
+
 fnc_enr_stop(){
     echo "$DESACTIVADO"
     echo 0 > /proc/sys/net/ipv4/ip_forward
     iptables -t nat -D POSTROUTING -o $enp -j MASQUERADE
+}
+
+fnc_enr_stop_nat(){
+    iptables -t nat -D POSTROUTING -o $enp -j MASQUERADE
+    echo "$DESACTIVADO"
+}
+
+fnc_enr_stop_enr(){
+    echo 0 > /proc/sys/net/ipv4/ip_forward
+    echo "$DESACTIVADO"
 }
 
 
@@ -38,6 +66,23 @@ fnc_enr_status(){
         echo "$DESACTIVADO"
     fi
     exit 1
+
+}
+
+fnc_enr_status_completo(){
+    echo "Etado del Enrutamiento: "
+    if [ $(cat /proc/sys/net/ipv4/ip_forward) -eq 1 ]; then
+        echo "$ACTIVADO"
+    else
+        echo "$DESACTIVADO"
+    fi
+
+    echo "Estado de la NAT: "
+    if iptables -t nat -C POSTROUTING -o "$enp" -j MASQUERADE 2> /dev/null; then
+        echo "$ACTIVADO"
+    else
+        echo "$DESACTIVADO"
+    fi
 }
 
 #####################################################
@@ -46,12 +91,6 @@ fnc_enr_status(){
 
 MSG2="Uso: $0 [start,stop,status]"
 
-estadoifwan=$(fnc_ifwan_status)
-if [ "$estadoifwan" == "$DESACTIVADO" ]; then
-    echo "El servicio ifwan está Parado"
-    echo "Ejecutalo con ./ifwan"
-    exit 1
-fi
 
 # comprovación numero de argumentos
 if [ $# -lt 1 ]; then
@@ -64,13 +103,41 @@ fi
 
 case $1 in
     start)
+        estadoifwan=$(fnc_ifwan_status)
+        if [ "$estadoifwan" == "$DESACTIVADO" ]; then
+            echo "El servicio ifwan está Parado"
+            echo "Ejecutalo con ./ifwan"
+            exit 1
+        fi
         fnc_enr_start 
+        ;;
+    startNAT)
+        estadoifwan=$(fnc_ifwan_status)
+        if [ "$estadoifwan" == "$DESACTIVADO" ]; then
+            echo "El servicio ifwan está Parado"
+            echo "Ejecutalo con ./ifwan"
+            exit 1
+        fi
+        fnc_enr_start_nat
+        ;;
+    startENR)
+        fnc_enr_start_enr
         ;;
     stop)
         fnc_enr_stop 
         ;;
+    stopNAT)
+        fnc_enr_stop_nat
+        ;;
+    stopENR)
+        fnc_enr_stop_enr
+        ;;
     status)
         fnc_enr_status 
+        exit 0
+        ;;
+    statusCOMPLETO)
+        fnc_enr_status_completo
         exit 0
         ;;
     *)

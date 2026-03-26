@@ -53,6 +53,7 @@ echo "=================================="
             continue
             ;;
         esac
+        ip l s dev "$NOM_IF" up
         ip l s dev "$NOM_IF" master br0
 	 	bridge vlan del dev $NOM_IF vid 1 pvid untagged	
 	 	if [ "$VLAN_UNTAG" != "0" ]; then
