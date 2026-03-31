@@ -87,16 +87,10 @@ fnc_aturar()
 	iptables -P INPUT ACCEPT
 	iptables -P OUTPUT ACCEPT
 	
-	
-	resultat=$(cd $DIR/$PROJECTO/$DIR_SCRIPTS/ && ./enrutar status)
-
-	# Comprovem si conté la paraula "ACTIVAT"
-	echo "$resultat" | grep -q "$ACTIVADO"
-
-	if [ $? -eq 0 ]; then
+	if iptables -t nat -C POSTROUTING -o "$enp" -j MASQUERADE 2> /dev/null; then
 		iptables -t nat -F 
 		iptables -t nat -X
-		cd $DIR/$PROJECTO/$DIR_SCRIPTS/ && ./enrutar start
+		cd $DIR/$PROJECTO/$DIR_SCRIPTS/ && ./enrutar startNAT
 	else
 		iptables -t nat -F 
 		iptables -t nat -X
