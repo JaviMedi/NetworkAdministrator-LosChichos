@@ -59,6 +59,7 @@ h4 a:hover {
 <h4><a href="/cgi-bin/ifwan.cgi?comand=stop&" target="body">Ifwan stop</a></h4>
 <h4><a href="/cgi-bin/ifwan.cgi?comand=status&" target="body">Ifwan status</a></h4>
 <h4><a href="/cgi-bin/configura-ifwan.cgi?"target="body">Ifwan config</a></h4>
+<h4><a href="/cgi-bin/avanzado-ifwan.cgi?" target="body">Avanzado</a></h4>
 </body>
 </html>
 

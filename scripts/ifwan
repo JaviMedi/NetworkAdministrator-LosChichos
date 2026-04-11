@@ -14,6 +14,45 @@ source $ifwanconf
 #########################################################
 ## Funciones 
 #########################################################
+fnc_advanced_save(){
+    local comp="$1"
+    local iface="$2"
+    local val="$3"
+    local db_file="/usr/local/LosChichos/conf/ifwan_advanced.db"
+    touch "$db_file" 2>/dev/null || true
+    sed -i "/^$comp,$iface,/d" "$db_file" 2>/dev/null || true
+    if [ -n "$val" ]; then
+        echo "$comp,$iface,$val" >> "$db_file" 2>/dev/null || true
+    fi
+}
+
+fnc_advanced_apply_boot(){
+    local db_file="/usr/local/LosChichos/conf/ifwan_advanced.db"
+    if [ -f "$db_file" ]; then
+        while IFS=, read -r comp iface val; do
+            case "$comp" in
+                IP) ip addr add "$val" dev "$iface" 2>/dev/null || true ;;
+                GW) 
+                    if [ "$iface" = "global" ]; then
+                        ip route add default via "$val" 2>/dev/null || true
+                    else
+                        ip route add default via "$val" dev "$iface" 2>/dev/null || true
+                    fi
+                    ;;
+                DNS) 
+                    if [ "$iface" = "global" ]; then
+                        fnc_almacenar_conf "DNS" "$val" "/etc/systemd/resolved.conf"
+                        systemctl restart systemd-resolved 2>/dev/null || true
+                    else
+                        resolvectl dns "$iface" "$val" 2>/dev/null || true
+                    fi
+                    ;;
+                ENP) ip link set dev "$iface" "$val" 2>/dev/null || true ;;
+            esac
+        done < "$db_file"
+    fi
+}
+
 fnc_status_rec(){
         MAX_TIEMPO=20
         INTERVALO=1
@@ -37,6 +76,7 @@ fnc_status_rec(){
 }
 
 fnc_start() {
+    fnc_advanced_apply_boot
 
     #if [ $(fnc_status) == "$ACTIVADO" ]; then
     #    echo "El servicio está activo"
@@ -287,6 +327,109 @@ case $opcion_1 in
         ;;  
     status)
         fnc_status $@
+        ;;
+    advanced)
+        subcmd="$1"
+        shift
+        iface="$1"
+        shift
+        action="$1"
+        shift
+        val="$1"
+        
+        if [ "$subcmd" = "apply_boot" ]; then
+            fnc_advanced_apply_boot
+            exit 0
+        fi
+
+        case $subcmd in
+            enp)
+                case $action in
+                    up|down) 
+                        ip link set dev "$iface" "$action"  2>/dev/null
+                        fnc_advanced_save "ENP" "$iface" "$action"
+                        ;;
+                    status) 
+                        if ip link show dev "$iface" 2>/dev/null | grep -q "state UP"; then echo "UP"; else echo "DOWN"; fi 
+                        ;;
+                esac
+            ;;
+            ip)
+                case $action in
+                    add) 
+                        ip addr add "$val" dev "$iface" &>/dev/null
+                        fnc_advanced_save "IP" "$iface" "$val"
+                        ;;
+                    del) 
+                        ip addr del "$val" dev "$iface" 2>/dev/null || ip addr flush dev "$iface" 2>/dev/null
+                        fnc_advanced_save "IP" "$iface" ""
+                        ;;
+                    status) 
+                        ip -4 addr show dev "$iface" 2>/dev/null | awk '/inet /{print $2}' | paste -sd "," 
+                        ;;
+                esac
+            ;;
+            gw)
+                case $action in
+                                        add) 
+                        if [ "$iface" = "global" ]; then
+                            ip route add default via "$val" &>/dev/null
+                        else
+                            ip route add default via "$val" dev "$iface" &>/dev/null
+                        fi
+                        fnc_advanced_save "GW" "$iface" "$val"
+                        ;;
+                    del) 
+                        if [ "$iface" = "global" ]; then
+                            ip route del default via "$val" 2>/dev/null
+                        else
+                            ip route del default via "$val" dev "$iface" 2>/dev/null
+                        fi
+                        fnc_advanced_save "GW" "$iface" ""
+                        ;;
+                    status) 
+                        if [ "$iface" = "global" ]; then
+                            ip -4 route show | awk '/default/{print $3}' | paste -sd "," 
+                        else
+                            ip -4 route show dev "$iface" 2>/dev/null | awk '/default/{print $3}' | paste -sd "," 
+                        fi
+                        ;;
+                esac
+            ;;
+            dns)
+                case $action in
+                    add) 
+                        if [ "$iface" = "global" ]; then
+                            fnc_almacenar_conf "DNS" "$val" "/etc/systemd/resolved.conf"
+                            systemctl restart systemd-resolved 2>/dev/null || true
+                        else
+                            resolvectl dns "$iface" "$val" 2>/dev/null || true
+                        fi
+                        fnc_advanced_save "DNS" "$iface" "$val"
+                        ;;
+                    del) 
+                        if [ "$iface" = "global" ]; then
+                            sed -i '/^DNS=/d' /etc/systemd/resolved.conf 2>/dev/null || true
+                            systemctl restart systemd-resolved 2>/dev/null || true
+                        else
+                            resolvectl revert "$iface" 2>/dev/null || true
+                        fi
+                        fnc_advanced_save "DNS" "$iface" ""
+                        ;;
+                    status) 
+                        if [ "$iface" = "global" ]; then
+                            grep "^DNS=" /etc/systemd/resolved.conf 2>/dev/null | cut -d'=' -f2 | paste -sd "," 
+                        else
+                            resolvectl dns "$iface" 2>/dev/null | awk '{for(i=4;i<=NF;++i) print $i}' | paste -sd "," 
+                        fi
+                        ;;
+                esac
+            ;;
+            *)
+                echo "Uso: $0 advanced [apply_boot | enp|ip|gw|dns] <iface> [up|down|add|del|status] <val>"
+                exit 1
+            ;;
+        esac
         ;;
     *)
         echo "$MSG"
